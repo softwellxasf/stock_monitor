@@ -23,7 +23,7 @@
               <span>模拟</span>
             </template>
             <el-menu-item index="/sim">
-              <el-icon><Home /></el-icon>
+              <el-icon><Monitor /></el-icon>
               <template #title>模拟概览</template>
             </el-menu-item>
             <el-menu-item index="/sim/positions">
@@ -217,6 +217,16 @@ onMounted(() => {
 .sidebar-menu .el-menu-item .el-icon,
 .sidebar-menu .el-sub-menu__title .el-icon,
 .sidebar-menu .el-sub-menu__title i {
+  color: #ffffff !important;
+}
+
+/* 子菜单标题悬停 */
+.sidebar-menu .el-sub-menu__title:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.sidebar-menu .el-sub-menu__title:hover .el-icon,
+.sidebar-menu .el-sub-menu__title:hover i {
   color: #ffffff !important;
 }
 
