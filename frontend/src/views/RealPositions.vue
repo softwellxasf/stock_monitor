@@ -21,13 +21,22 @@
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
-        <el-input
+        <el-select
           v-model="filters.industry"
           placeholder="行业"
           clearable
+          filterable
           style="width: 150px"
-          @keyup.enter="handleSearch"
-        />
+          @change="handleSearch"
+        >
+          <el-option label="全部" value="" />
+          <el-option
+            v-for="ind in industries"
+            :key="ind"
+            :label="ind"
+            :value="ind"
+          />
+        </el-select>
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-button @click="resetSearch">重置</el-button>
       </div>
@@ -90,6 +99,7 @@ import { actual } from '../api'
 
 const positions = ref([])
 const loading = ref(false)
+const industries = ref([])
 
 const filters = reactive({
   keyword: '',
@@ -116,6 +126,10 @@ const loadPositions = async () => {
     if (res.data.success) {
       positions.value = res.data.data
       pagination.total = res.data.total || 0
+      // 提取行业列表
+      if (res.data.industries) {
+        industries.value = res.data.industries
+      }
     }
   } catch (error) {
     console.error('加载实盘持仓失败:', error)

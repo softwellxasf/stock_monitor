@@ -239,6 +239,14 @@ def get_actual_positions():
     # 总数
     total = query.count()
 
+    # 获取所有行业列表（用于下拉筛选）
+    industries = db.session.query(Position.industry).filter(
+        Position.quantity > 0,
+        Position.industry != None,
+        Position.industry != ''
+    ).distinct().order_by(Position.industry).all()
+    industry_list = [i[0] for i in industries if i[0]]
+
     # 分页排序
     positions = query.order_by(Position.updated_at.desc()).offset(
         (page - 1) * page_size
@@ -272,7 +280,8 @@ def get_actual_positions():
         'data': result,
         'total': total,
         'page': page,
-        'page_size': page_size
+        'page_size': page_size,
+        'industries': industry_list
     })
 
 @app.route('/api/actual-trades', methods=['GET'])
