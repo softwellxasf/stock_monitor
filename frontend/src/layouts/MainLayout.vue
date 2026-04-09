@@ -15,22 +15,35 @@
           router
           class="sidebar-menu"
         >
+          <!-- 模拟分类 -->
+          <el-sub-menu index="sim">
+            <template #title>
+              <el-icon><TrendCharts /></el-icon>
+              <span>模拟</span>
+            </template>
+            <el-menu-item index="/sim">
+              <el-icon><Home /></el-icon>
+              <template #title>模拟概览</template>
+            </el-menu-item>
+            <el-menu-item index="/sim/positions">
+              <el-icon><List /></el-icon>
+              <template #title>模拟持仓</template>
+            </el-menu-item>
+          </el-sub-menu>
+          
+          <!-- 实盘分类 -->
+          <el-sub-menu index="real">
+            <template #title>
+              <el-icon><Briefcase /></el-icon>
+              <span>实盘</span>
+            </template>
+            <el-menu-item index="/real/positions">
+              <el-icon><Briefcase /></el-icon>
+              <template #title>实盘持仓</template>
+            </el-menu-item>
+          </el-sub-menu>
+          
           <!-- 公共功能 -->
-          <el-menu-item index="/sim">
-            <el-icon><Home /></el-icon>
-            <template #title>模拟概览</template>
-          </el-menu-item>
-          
-          <el-menu-item index="/sim/positions">
-            <el-icon><List /></el-icon>
-            <template #title>模拟持仓</template>
-          </el-menu-item>
-          
-          <el-menu-item index="/real/positions">
-            <el-icon><Briefcase /></el-icon>
-            <template #title>实盘持仓</template>
-          </el-menu-item>
-          
           <el-menu-item index="/watchlist">
             <el-icon><Star /></el-icon>
             <template #title>自选列表</template>
@@ -102,8 +115,6 @@ const pageTitle = computed(() => {
     '/sim': '模拟概览',
     '/sim/positions': '模拟持仓',
     '/real/positions': '实盘持仓',
-    '/real/trades': '交易记录',
-    '/real/analysis': '收益分析',
     '/watchlist': '自选列表',
     '/stats': '统计分析'
   }
@@ -181,12 +192,13 @@ onMounted(() => {
 }
 
 /* 菜单项默认样式 */
-.sidebar-menu .el-menu-item {
+.sidebar-menu .el-menu-item,
+.sidebar-menu .el-sub-menu__title {
   color: #bfcbd9;
-  background: transparent;
 }
 
-.sidebar-menu .el-menu-item:hover {
+.sidebar-menu .el-menu-item:hover,
+.sidebar-menu .el-sub-menu__title:hover {
   background: #263445;
   color: #fff;
 }
