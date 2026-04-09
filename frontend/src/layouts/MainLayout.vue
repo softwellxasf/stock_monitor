@@ -49,17 +49,23 @@
               <el-icon><List /></el-icon>
               <template #title>模拟持仓</template>
             </el-menu-item>
+          </el-sub-menu>
+          
+          <!-- 公共功能 -->
+          <el-sub-menu index="common">
+            <template #title>
+              <el-icon><Menu /></el-icon>
+              <span>公共</span>
+            </template>
             <el-menu-item index="/watchlist">
               <el-icon><Star /></el-icon>
               <template #title>自选列表</template>
             </el-menu-item>
+            <el-menu-item index="/stats">
+              <el-icon><DataAnalysis /></el-icon>
+              <template #title>统计分析</template>
+            </el-menu-item>
           </el-sub-menu>
-          
-          <!-- 公共功能 -->
-          <el-menu-item index="/stats">
-            <el-icon><DataAnalysis /></el-icon>
-            <template #title>统计</template>
-          </el-menu-item>
         </el-menu>
         
         <!-- 收缩按钮 -->
@@ -81,8 +87,8 @@
             </el-breadcrumb>
           </div>
           <div class="header-right">
-            <el-tag :type="currentMode === 'real' ? 'warning' : 'success'" size="small" style="margin-right: 15px">
-              {{ currentMode === 'real' ? '实盘模式' : '模拟模式' }}
+            <el-tag :type="currentMode === 'real' ? 'warning' : (currentMode === 'sim' ? 'success' : 'info')" size="small" style="margin-right: 15px">
+              {{ modeLabel }}
             </el-tag>
             <el-dropdown @command="handleCommand">
               <span class="user-info">
@@ -123,12 +129,17 @@ const activeMenu = computed(() => route.path)
 const currentMode = computed(() => {
   if (route.path.startsWith('/real')) return 'real'
   if (route.path.startsWith('/sim')) return 'sim'
-  return 'sim' // 默认模拟
+  return 'common'
+})
+
+const modeLabel = computed(() => {
+  if (currentMode.value === 'real') return '实盘模式'
+  if (currentMode.value === 'sim') return '模拟模式'
+  return '公共功能'
 })
 
 const pageTitle = computed(() => {
   const titles = {
-    '/': '概览',
     '/real/positions': '实盘持仓',
     '/real/trades': '交易记录',
     '/real/analysis': '收益分析',
@@ -225,18 +236,19 @@ onMounted(() => {
   color: #fff;
 }
 
-/* 实盘子菜单 */
-.sidebar-menu .el-menu-item[index="/real/positions"].is-active,
-.sidebar-menu .el-menu-item[index="/real/trades"].is-active,
-.sidebar-menu .el-menu-item[index="/real/analysis"].is-active {
+/* 实盘子菜单激活色 */
+.sidebar-menu .el-sub-menu[index="real"] .el-menu-item.is-active {
   background: #e6a23c;
 }
 
-/* 模拟子菜单 */
-.sidebar-menu .el-menu-item[index="/sim"].is-active,
-.sidebar-menu .el-menu-item[index="/sim/positions"].is-active,
-.sidebar-menu .el-menu-item[index="/watchlist"].is-active {
+/* 模拟子菜单激活色 */
+.sidebar-menu .el-sub-menu[index="sim"] .el-menu-item.is-active {
   background: #67c23a;
+}
+
+/* 公共子菜单激活色 */
+.sidebar-menu .el-sub-menu[index="common"] .el-menu-item.is-active {
+  background: #409EFF;
 }
 
 .collapse-btn {
