@@ -10,18 +10,25 @@ const routes = [
   {
     path: '/',
     component: MainLayout,
+    redirect: '/sim',
     children: [
       {
-        path: '',
-        name: 'Dashboard',
-        component: () => import('../views/Dashboard.vue'),
-        meta: { requiresAuth: true, title: '概览' }
+        path: 'sim',
+        name: 'SimDashboard',
+        component: () => import('../views/SimDashboard.vue'),
+        meta: { requiresAuth: true, title: '模拟概览' }
       },
       {
-        path: 'positions',
-        name: 'Positions',
-        component: () => import('../views/Positions.vue'),
-        meta: { requiresAuth: true, title: '持仓管理' }
+        path: 'sim/positions',
+        name: 'SimPositions',
+        component: () => import('../views/SimPositions.vue'),
+        meta: { requiresAuth: true, title: '模拟持仓' }
+      },
+      {
+        path: 'real/positions',
+        name: 'RealPositions',
+        component: () => import('../views/RealPositions.vue'),
+        meta: { requiresAuth: true, title: '实盘持仓' }
       },
       {
         path: 'watchlist',

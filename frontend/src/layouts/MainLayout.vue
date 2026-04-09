@@ -7,6 +7,7 @@
           <span v-if="!isCollapse">📊 stockMonitor</span>
           <span v-else>📊</span>
         </div>
+        
         <el-menu
           :default-active="activeMenu"
           :collapse="isCollapse"
@@ -14,21 +15,30 @@
           router
           class="sidebar-menu"
         >
-          <el-menu-item index="/">
+          <!-- 公共功能 -->
+          <el-menu-item index="/sim">
             <el-icon><Home /></el-icon>
-            <template #title>首页</template>
+            <template #title>模拟概览</template>
           </el-menu-item>
-          <el-menu-item index="/positions">
+          
+          <el-menu-item index="/sim/positions">
             <el-icon><List /></el-icon>
-            <template #title>持仓</template>
+            <template #title>模拟持仓</template>
           </el-menu-item>
+          
+          <el-menu-item index="/real/positions">
+            <el-icon><Briefcase /></el-icon>
+            <template #title>实盘持仓</template>
+          </el-menu-item>
+          
           <el-menu-item index="/watchlist">
             <el-icon><Star /></el-icon>
-            <template #title>自选</template>
+            <template #title>自选列表</template>
           </el-menu-item>
+          
           <el-menu-item index="/stats">
             <el-icon><DataAnalysis /></el-icon>
-            <template #title>统计</template>
+            <template #title>统计分析</template>
           </el-menu-item>
         </el-menu>
         
@@ -89,8 +99,11 @@ const activeMenu = computed(() => route.path)
 
 const pageTitle = computed(() => {
   const titles = {
-    '/': '概览',
-    '/positions': '持仓管理',
+    '/sim': '模拟概览',
+    '/sim/positions': '模拟持仓',
+    '/real/positions': '实盘持仓',
+    '/real/trades': '交易记录',
+    '/real/analysis': '收益分析',
     '/watchlist': '自选列表',
     '/stats': '统计分析'
   }
@@ -119,7 +132,6 @@ const handleCommand = async (command) => {
 }
 
 onMounted(() => {
-  // 从 token 中解析用户名（简化版，实际应该解析 JWT）
   const token = localStorage.getItem('token')
   if (token) {
     try {
@@ -168,12 +180,15 @@ onMounted(() => {
   width: 220px;
 }
 
+/* 菜单项默认样式 */
 .sidebar-menu .el-menu-item {
   color: #bfcbd9;
+  background: transparent;
 }
 
 .sidebar-menu .el-menu-item:hover {
   background: #263445;
+  color: #fff;
 }
 
 .sidebar-menu .el-menu-item.is-active {
