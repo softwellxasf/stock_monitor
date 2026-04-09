@@ -7,6 +7,7 @@
           <span v-if="!isCollapse">📊 stockMonitor</span>
           <span v-else>📊</span>
         </div>
+        
         <el-menu
           :default-active="activeMenu"
           :collapse="isCollapse"
@@ -14,18 +15,47 @@
           router
           class="sidebar-menu"
         >
-          <el-menu-item index="/">
-            <el-icon><Home /></el-icon>
-            <template #title>首页</template>
-          </el-menu-item>
-          <el-menu-item index="/positions">
-            <el-icon><List /></el-icon>
-            <template #title>持仓</template>
-          </el-menu-item>
-          <el-menu-item index="/watchlist">
-            <el-icon><Star /></el-icon>
-            <template #title>自选</template>
-          </el-menu-item>
+          <!-- 实盘分类 -->
+          <el-sub-menu index="real">
+            <template #title>
+              <el-icon><Briefcase /></el-icon>
+              <span>实盘</span>
+            </template>
+            <el-menu-item index="/real/positions">
+              <el-icon><List /></el-icon>
+              <template #title>实盘持仓</template>
+            </el-menu-item>
+            <el-menu-item index="/real/trades">
+              <el-icon><Document /></el-icon>
+              <template #title>交易记录</template>
+            </el-menu-item>
+            <el-menu-item index="/real/analysis">
+              <el-icon><TrendCharts /></el-icon>
+              <template #title>收益分析</template>
+            </el-menu-item>
+          </el-sub-menu>
+          
+          <!-- 模拟分类 -->
+          <el-sub-menu index="sim">
+            <template #title>
+              <el-icon><Coin /></el-icon>
+              <span>模拟</span>
+            </template>
+            <el-menu-item index="/sim">
+              <el-icon><Home /></el-icon>
+              <template #title>模拟概览</template>
+            </el-menu-item>
+            <el-menu-item index="/sim/positions">
+              <el-icon><List /></el-icon>
+              <template #title>模拟持仓</template>
+            </el-menu-item>
+            <el-menu-item index="/watchlist">
+              <el-icon><Star /></el-icon>
+              <template #title>自选列表</template>
+            </el-menu-item>
+          </el-sub-menu>
+          
+          <!-- 公共功能 -->
           <el-menu-item index="/stats">
             <el-icon><DataAnalysis /></el-icon>
             <template #title>统计</template>
@@ -51,6 +81,9 @@
             </el-breadcrumb>
           </div>
           <div class="header-right">
+            <el-tag :type="currentMode === 'real' ? 'warning' : 'success'" size="small" style="margin-right: 15px">
+              {{ currentMode === 'real' ? '实盘模式' : '模拟模式' }}
+            </el-tag>
             <el-dropdown @command="handleCommand">
               <span class="user-info">
                 <el-avatar :size="32" icon="User" />
@@ -87,10 +120,20 @@ const username = ref('admin')
 
 const activeMenu = computed(() => route.path)
 
+const currentMode = computed(() => {
+  if (route.path.startsWith('/real')) return 'real'
+  if (route.path.startsWith('/sim')) return 'sim'
+  return 'sim' // 默认模拟
+})
+
 const pageTitle = computed(() => {
   const titles = {
     '/': '概览',
-    '/positions': '持仓管理',
+    '/real/positions': '实盘持仓',
+    '/real/trades': '交易记录',
+    '/real/analysis': '收益分析',
+    '/sim': '模拟概览',
+    '/sim/positions': '模拟持仓',
     '/watchlist': '自选列表',
     '/stats': '统计分析'
   }
@@ -119,7 +162,6 @@ const handleCommand = async (command) => {
 }
 
 onMounted(() => {
-  // 从 token 中解析用户名（简化版，实际应该解析 JWT）
   const token = localStorage.getItem('token')
   if (token) {
     try {
@@ -168,17 +210,33 @@ onMounted(() => {
   width: 220px;
 }
 
-.sidebar-menu .el-menu-item {
+.sidebar-menu .el-menu-item,
+.sidebar-menu .el-sub-menu__title {
   color: #bfcbd9;
 }
 
-.sidebar-menu .el-menu-item:hover {
+.sidebar-menu .el-menu-item:hover,
+.sidebar-menu .el-sub-menu__title:hover {
   background: #263445;
 }
 
 .sidebar-menu .el-menu-item.is-active {
   background: #409EFF;
   color: #fff;
+}
+
+/* 实盘子菜单 */
+.sidebar-menu .el-menu-item[index="/real/positions"].is-active,
+.sidebar-menu .el-menu-item[index="/real/trades"].is-active,
+.sidebar-menu .el-menu-item[index="/real/analysis"].is-active {
+  background: #e6a23c;
+}
+
+/* 模拟子菜单 */
+.sidebar-menu .el-menu-item[index="/sim"].is-active,
+.sidebar-menu .el-menu-item[index="/sim/positions"].is-active,
+.sidebar-menu .el-menu-item[index="/watchlist"].is-active {
+  background: #67c23a;
 }
 
 .collapse-btn {
