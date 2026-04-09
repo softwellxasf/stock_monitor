@@ -156,7 +156,7 @@ onMounted(() => {
 .el-container { height: 100vh; }
 
 .sidebar {
-  background: var(--theme-sidebar, #304156);
+  background: var(--theme-sidebar, #1a3a5c);
   transition: width 0.3s;
   position: relative;
   overflow: hidden;
@@ -170,7 +170,7 @@ onMounted(() => {
   color: #fff;
   font-size: 18px;
   font-weight: bold;
-  background: rgba(0,0,0,0.2);
+  background: rgba(0,0,0,0.15);
 }
 
 .sidebar-menu { border-right: none; background: transparent; }
@@ -178,17 +178,17 @@ onMounted(() => {
 
 .sidebar-menu .el-menu-item,
 .sidebar-menu .el-sub-menu__title {
-  color: #bfcbd9;
+  color: #b0c4d8;
 }
 
 .sidebar-menu .el-menu-item:hover,
 .sidebar-menu .el-sub-menu__title:hover {
-  background: var(--theme-sidebar-hover, #263445);
+  background: var(--theme-sidebar-hover, #234a6f);
   color: #fff;
 }
 
 .sidebar-menu .el-menu-item.is-active {
-  background: var(--theme-sidebar-active, #409EFF);
+  background: var(--theme-sidebar-active, #2B5B9E);
   color: #fff;
 }
 
@@ -199,7 +199,7 @@ onMounted(() => {
   transform: translateX(-50%);
   width: 40px;
   height: 40px;
-  background: rgba(0,0,0,0.3);
+  background: rgba(0,0,0,0.25);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -209,11 +209,11 @@ onMounted(() => {
   transition: background 0.3s;
 }
 
-.collapse-btn:hover { background: var(--theme-primary, #409EFF); }
+.collapse-btn:hover { background: var(--theme-primary, #2B5B9E); }
 
 .header {
-  background: #fff;
-  border-bottom: 1px solid #e4e7ed;
+  background: var(--theme-bg, #F7F8FA);
+  border-bottom: 1px solid var(--theme-border, #E5E6EB);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -224,6 +224,6 @@ onMounted(() => {
 .header-left { flex: 1; }
 .header-right { display: flex; align-items: center; }
 .user-info { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-.username { color: #606266; font-size: 14px; }
-.main-content { background: #f5f7fa; padding: 20px; overflow-y: auto; }
+.username { color: var(--theme-text, #333); font-size: 14px; }
+.main-content { background: var(--theme-bg, #F7F8FA); padding: 20px; overflow-y: auto; }
 </style>

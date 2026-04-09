@@ -1,30 +1,44 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-// 主题配置
+// 主题配置 - 专业商务风格
 const themes = {
-  mint: {
-    name: '薄荷流光',
-    primary: '#00B75E',
-    secondary: '#F1F1F1',
-    accent: '#6531FF',
-    sidebar: '#0a2e1f',
-    sidebarHover: '#0f3d29',
-    sidebarActive: '#1a4d36'
+  navy: {
+    name: '深蓝商务',
+    primary: '#2B5B9E',
+    title: '#1F3A61',
+    text: '#333333',
+    textSecondary: '#666666',
+    border: '#E5E6EB',
+    bg: '#F7F8FA',
+    success: '#27AE60',
+    warning: '#F59E0B',
+    danger: '#E53E3E',
+    link: '#3676D1',
+    sidebar: '#1a3a5c',
+    sidebarHover: '#234a6f',
+    sidebarActive: '#2B5B9E'
   },
-  citrus: {
-    name: '柚光晴空',
-    primary: '#F45805',
-    secondary: '#F5F5F5',
-    accent: '#0344A1',
-    sidebar: '#3d1a05',
-    sidebarHover: '#4d2107',
-    sidebarActive: '#5c2809'
+  cyan: {
+    name: '灰青静谧',
+    primary: '#3D8C8A',
+    title: '#2C3E50',
+    text: '#444444',
+    textSecondary: '#777777',
+    border: '#E8E8ED',
+    bg: '#F9FAFB',
+    success: '#22C55E',
+    warning: '#F97316',
+    danger: '#EF4444',
+    link: '#4A9C9A',
+    sidebar: '#2c5a58',
+    sidebarHover: '#356b69',
+    sidebarActive: '#3D8C8A'
   }
 }
 
 export const useThemeStore = defineStore('theme', () => {
-  const currentTheme = ref(localStorage.getItem('theme') || 'mint')
+  const currentTheme = ref(localStorage.getItem('theme') || 'navy')
   
   const themeData = computed(() => themes[currentTheme.value])
   
@@ -39,8 +53,15 @@ export const useThemeStore = defineStore('theme', () => {
     const root = document.documentElement
     
     root.style.setProperty('--theme-primary', theme.primary)
-    root.style.setProperty('--theme-secondary', theme.secondary)
-    root.style.setProperty('--theme-accent', theme.accent)
+    root.style.setProperty('--theme-title', theme.title)
+    root.style.setProperty('--theme-text', theme.text)
+    root.style.setProperty('--theme-text-secondary', theme.textSecondary)
+    root.style.setProperty('--theme-border', theme.border)
+    root.style.setProperty('--theme-bg', theme.bg)
+    root.style.setProperty('--theme-success', theme.success)
+    root.style.setProperty('--theme-warning', theme.warning)
+    root.style.setProperty('--theme-danger', theme.danger)
+    root.style.setProperty('--theme-link', theme.link)
     root.style.setProperty('--theme-sidebar', theme.sidebar)
     root.style.setProperty('--theme-sidebar-hover', theme.sidebarHover)
     root.style.setProperty('--theme-sidebar-active', theme.sidebarActive)
