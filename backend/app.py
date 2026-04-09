@@ -67,6 +67,7 @@ class SimTrade(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     amount = db.Column(db.Numeric(12,2), nullable=False)
     trade_date = db.Column(db.DateTime, nullable=False)
+    cost = db.Column(db.Numeric(12,2))  # 交易成本/持仓成本
     reason = db.Column(db.String(200))  # 数据库中是 reason
     created_at = db.Column(db.DateTime)
 
@@ -85,10 +86,16 @@ class SimTrade(db.Model):
 
     @property
     def profit_loss(self):
+        """计算盈亏：卖出时 = 成交金额 - 成本"""
+        if self.action == 'SELL' and self.cost:
+            return float(self.amount) - float(self.cost)
         return 0
 
     @property
     def profit_loss_pct(self):
+        """计算盈亏比例"""
+        if self.action == 'SELL' and self.cost and float(self.cost) > 0:
+            return (float(self.amount) - float(self.cost)) / float(self.cost) * 100
         return 0
 
     @property
@@ -750,11 +757,15 @@ def get_sim_stats():
         for p in positions
     )
 
-    # 计算总盈亏（从 trades 表累计卖出盈亏）
-    total_profit = db.session.query(db.func.sum(SimTrade.profit_loss)).filter(
-        SimTrade.direction == 'SELL',
-        SimTrade.profit_loss != 0
+    # 计算总盈亏 = 已实现盈亏（卖出交易）+ 未实现盈亏（当前持仓）
+    realized_profit = db.session.query(db.func.sum(SimTrade.amount - SimTrade.cost)).filter(
+        SimTrade.action == 'SELL'
     ).scalar() or 0
+
+    # 未实现盈亏 = 当前持仓市值 - 持仓成本（模拟盘暂不计算实时市值，所以为 0）
+    unrealized_profit = 0  # 持仓浮动盈亏
+
+    total_profit = realized_profit + unrealized_profit
 
     # 账户信息
     account = SimAccount.query.filter_by(id=1).first()
