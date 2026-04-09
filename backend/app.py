@@ -215,8 +215,34 @@ def get_watchlist():
 @app.route('/api/actual-positions', methods=['GET'])
 @jwt_required()
 def get_actual_positions():
-    """获取实盘持仓列表"""
-    positions = Position.query.filter(Position.quantity > 0).all()
+    """获取实盘持仓列表（支持搜索和分页）"""
+    # 获取查询参数
+    page = request.args.get('page', 1, type=int)
+    page_size = request.args.get('page_size', 20, type=int)
+    keyword = request.args.get('keyword', '')
+    industry = request.args.get('industry', '')
+
+    # 构建查询
+    query = Position.query.filter(Position.quantity > 0)
+
+    # 条件过滤
+    if keyword:
+        query = query.filter(
+            db.or_(
+                Position.stock_code.like(f'%{keyword}%'),
+                Position.stock_name.like(f'%{keyword}%')
+            )
+        )
+    if industry:
+        query = query.filter(Position.industry == industry)
+
+    # 总数
+    total = query.count()
+
+    # 分页排序
+    positions = query.order_by(Position.updated_at.desc()).offset(
+        (page - 1) * page_size
+    ).limit(page_size).all()
 
     result = []
     for p in positions:
@@ -241,7 +267,13 @@ def get_actual_positions():
             'updated_at': p.updated_at.strftime('%Y-%m-%d %H:%M') if p.updated_at else None
         })
 
-    return jsonify({'success': True, 'data': result})
+    return jsonify({
+        'success': True,
+        'data': result,
+        'total': total,
+        'page': page,
+        'page_size': page_size
+    })
 
 @app.route('/api/actual-trades', methods=['GET'])
 @jwt_required()
