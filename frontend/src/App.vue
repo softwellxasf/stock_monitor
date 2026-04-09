@@ -1,5 +1,7 @@
 <template>
-  <router-view />
+  <div class="app-container">
+    <router-view />
+  </div>
 </template>
 
 <script setup>
@@ -15,5 +17,9 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   background: #f5f7fa;
+}
+
+.app-container {
+  min-height: 100vh;
 }
 </style>
