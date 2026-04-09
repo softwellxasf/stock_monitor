@@ -87,7 +87,6 @@
             </el-breadcrumb>
           </div>
           <div class="header-right">
-            <ThemeSwitcher />
             <el-tag :type="currentMode === 'real' ? 'warning' : (currentMode === 'sim' ? 'success' : 'info')" size="small" style="margin-right: 15px">
               {{ modeLabel }}
             </el-tag>
@@ -118,7 +117,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import ThemeSwitcher from '../components/ThemeSwitcher.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -197,7 +195,7 @@ onMounted(() => {
 }
 
 .sidebar {
-  background: var(--theme-sidebar, #2a384a);
+  background: #304156;
   transition: width 0.3s;
   position: relative;
   overflow: hidden;
@@ -211,62 +209,46 @@ onMounted(() => {
   color: #fff;
   font-size: 18px;
   font-weight: bold;
-  background: rgba(0,0,0,0.2);
+  background: #263445;
 }
 
 .sidebar-menu {
   border-right: none;
-  background: var(--theme-sidebar, #2a384a);
+  background: #304156;
 }
 
 .sidebar-menu:not(.el-menu--collapse) {
   width: 220px;
 }
 
-/* 菜单项默认样式 */
 .sidebar-menu .el-menu-item,
 .sidebar-menu .el-sub-menu__title {
-  color: #b0c4d8;
-  background: var(--theme-sidebar, #2a384a);
-  transition: all 0.3s ease;
+  color: #bfcbd9;
 }
 
-/* 悬停效果 */
 .sidebar-menu .el-menu-item:hover,
 .sidebar-menu .el-sub-menu__title:hover {
-  background: var(--theme-sidebar-hover, #324157);
-  color: #cfe1f3;
+  background: #263445;
 }
 
-/* 选中状态 */
 .sidebar-menu .el-menu-item.is-active {
-  background: var(--theme-sidebar-active, #3d5068);
+  background: #409EFF;
   color: #fff;
-  box-shadow: inset 3px 0 0 var(--theme-primary, #409EFF);
 }
 
-/* 实盘子菜单激活 */
+/* 实盘子菜单激活色 */
 .sidebar-menu .el-sub-menu[index="real"] .el-menu-item.is-active {
-  box-shadow: inset 3px 0 0 #e6a23c;
+  background: #e6a23c;
 }
 
-/* 模拟子菜单激活 */
+/* 模拟子菜单激活色 */
 .sidebar-menu .el-sub-menu[index="sim"] .el-menu-item.is-active {
-  box-shadow: inset 3px 0 0 #67c23a;
+  background: #67c23a;
 }
 
-/* 公共子菜单激活 */
+/* 公共子菜单激活色 */
 .sidebar-menu .el-sub-menu[index="common"] .el-menu-item.is-active {
-  box-shadow: inset 3px 0 0 var(--theme-primary, #409EFF);
-}
-
-/* 子菜单展开背景 */
-.sidebar-menu .el-menu--inline {
-  background: rgba(0,0,0,0.15);
-}
-
-.sidebar-menu .el-menu--inline .el-menu-item {
-  background: var(--theme-sidebar, #2a384a);
+  background: #409EFF;
 }
 
 .collapse-btn {
@@ -276,18 +258,18 @@ onMounted(() => {
   transform: translateX(-50%);
   width: 40px;
   height: 40px;
-  background: rgba(0,0,0,0.3);
+  background: #263445;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: background 0.3s;
 }
 
 .collapse-btn:hover {
-  background: var(--theme-primary, #409EFF);
+  background: #409EFF;
 }
 
 .header {
