@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-// 主题配置 - 专业商务风格
+// 主题配置 - 专业商务风格（侧边栏调浅）
 const themes = {
   navy: {
     name: '深蓝商务',
@@ -15,9 +15,9 @@ const themes = {
     warning: '#F59E0B',
     danger: '#E53E3E',
     link: '#3676D1',
-    sidebar: '#1a3a5c',
-    sidebarHover: '#234a6f',
-    sidebarActive: '#2B5B9E'
+    sidebar: '#2d4a6b',        // 调浅：原 #1a3a5c
+    sidebarHover: '#3d5a7b',   // 调浅：原 #234a6f
+    sidebarActive: '#3d6bb3'   // 调浅：原 #2B5B9E
   },
   cyan: {
     name: '灰青静谧',
@@ -31,9 +31,9 @@ const themes = {
     warning: '#F97316',
     danger: '#EF4444',
     link: '#4A9C9A',
-    sidebar: '#2c5a58',
-    sidebarHover: '#356b69',
-    sidebarActive: '#3D8C8A'
+    sidebar: '#3d5c5a',        // 调浅：原 #2c5a58
+    sidebarHover: '#4d6c6a',   // 调浅：原 #356b69
+    sidebarActive: '#4d9c9a'   // 调浅：原 #3D8C8A
   }
 }
 

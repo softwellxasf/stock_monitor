@@ -156,7 +156,7 @@ onMounted(() => {
 .el-container { height: 100vh; }
 
 .sidebar {
-  background: var(--theme-sidebar, #1a3a5c);
+  background: var(--theme-sidebar, #2d4a6b);
   transition: width 0.3s;
   position: relative;
   overflow: hidden;
@@ -168,9 +168,10 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 18px;
-  font-weight: bold;
-  background: rgba(0,0,0,0.15);
+  font-size: 16px;
+  font-weight: 500;
+  background: rgba(0,0,0,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
 .sidebar-menu { border-right: none; background: transparent; }
@@ -178,17 +179,18 @@ onMounted(() => {
 
 .sidebar-menu .el-menu-item,
 .sidebar-menu .el-sub-menu__title {
-  color: #b0c4d8;
+  color: #c5d5e8;
+  font-size: 14px;
 }
 
 .sidebar-menu .el-menu-item:hover,
 .sidebar-menu .el-sub-menu__title:hover {
-  background: var(--theme-sidebar-hover, #234a6f);
+  background: var(--theme-sidebar-hover, #3d5a7b);
   color: #fff;
 }
 
 .sidebar-menu .el-menu-item.is-active {
-  background: var(--theme-sidebar-active, #2B5B9E);
+  background: var(--theme-sidebar-active, #3d6bb3);
   color: #fff;
 }
 
@@ -199,7 +201,7 @@ onMounted(() => {
   transform: translateX(-50%);
   width: 40px;
   height: 40px;
-  background: rgba(0,0,0,0.25);
+  background: rgba(255,255,255,0.15);
   border-radius: 50%;
   display: flex;
   align-items: center;
