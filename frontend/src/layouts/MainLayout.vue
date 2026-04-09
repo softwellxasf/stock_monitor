@@ -205,91 +205,84 @@ onMounted(() => {
   width: 220px;
 }
 
-/* 一级菜单（子菜单标题）和二级菜单统一颜色 - 强制覆盖 Element Plus 默认样式 */
-.sidebar-menu .el-menu-item,
-.sidebar-menu .el-sub-menu__title {
+/* 一级菜单标题颜色 - 使用:deep() 穿透 Element Plus 样式 */
+:deep(.sidebar-menu .el-sub-menu .el-sub-menu__title),
+:deep(.sidebar-menu .el-sub-menu .el-sub-menu__title .el-icon),
+:deep(.sidebar-menu .el-sub-menu .el-sub-menu__title i),
+:deep(.sidebar-menu .el-sub-menu .el-sub-menu__title span),
+:deep(.sidebar-menu .el-menu-item),
+:deep(.sidebar-menu .el-menu-item .el-icon) {
   color: #ffffff !important;
-  font-size: 14px;
-  background: transparent;
 }
 
 /* 菜单项图标颜色 */
-.sidebar-menu .el-menu-item .el-icon,
-.sidebar-menu .el-sub-menu__title .el-icon,
-.sidebar-menu .el-sub-menu__title i {
+:deep(.sidebar-menu .el-menu-item .el-icon),
+:deep(.sidebar-menu .el-sub-menu__title .el-icon),
+:deep(.sidebar-menu .el-sub-menu__title i) {
   color: #ffffff !important;
 }
 
 /* 子菜单标题悬停 */
-.sidebar-menu .el-sub-menu__title:hover {
+:deep(.sidebar-menu .el-sub-menu__title:hover) {
   background: rgba(255, 255, 255, 0.15) !important;
 }
 
-.sidebar-menu .el-sub-menu__title:hover .el-icon,
-.sidebar-menu .el-sub-menu__title:hover i {
+:deep(.sidebar-menu .el-sub-menu__title:hover .el-icon),
+:deep(.sidebar-menu .el-sub-menu__title:hover i) {
   color: #ffffff !important;
 }
 
 /* 悬停效果 - 一级和二级统一 */
-.sidebar-menu .el-menu-item:hover,
-.sidebar-menu .el-sub-menu__title:hover {
+:deep(.sidebar-menu .el-menu-item:hover),
+:deep(.sidebar-menu .el-sub-menu__title:hover) {
   background: rgba(255, 255, 255, 0.15) !important;
   color: #ffffff !important;
 }
 
-.sidebar-menu .el-menu-item:hover .el-icon,
-.sidebar-menu .el-sub-menu__title:hover .el-icon {
+:deep(.sidebar-menu .el-menu-item:hover .el-icon),
+:deep(.sidebar-menu .el-sub-menu__title:hover .el-icon) {
   color: #ffffff !important;
 }
 
 /* 选中状态 - 使用主题色 */
-.sidebar-menu .el-menu-item.is-active {
+:deep(.sidebar-menu .el-menu-item.is-active) {
   background: var(--theme-sidebar-active, #3d6bb3) !important;
   color: #ffffff !important;
 }
 
-.sidebar-menu .el-menu-item.is-active .el-icon {
+:deep(.sidebar-menu .el-menu-item.is-active .el-icon) {
   color: #ffffff !important;
 }
 
 /* 子菜单展开背景 - 轻微加深 */
-.sidebar-menu .el-menu--inline {
+:deep(.sidebar-menu .el-menu--inline) {
   background: rgba(0, 0, 0, 0.12) !important;
 }
 
-.sidebar-menu .el-menu--inline .el-menu-item {
+:deep(.sidebar-menu .el-menu--inline .el-menu-item) {
   color: #ffffff !important;
 }
 
-.sidebar-menu .el-menu--inline .el-menu-item .el-icon {
+:deep(.sidebar-menu .el-menu--inline .el-menu-item .el-icon) {
   color: #ffffff !important;
 }
 
-.sidebar-menu .el-menu--inline .el-menu-item:hover {
+:deep(.sidebar-menu .el-menu--inline .el-menu-item:hover) {
   background: rgba(255, 255, 255, 0.15) !important;
   color: #ffffff !important;
 }
 
-.sidebar-menu .el-menu--inline .el-menu-item:hover .el-icon {
+:deep(.sidebar-menu .el-menu--inline .el-menu-item:hover .el-icon) {
   color: #ffffff !important;
 }
 
-.sidebar-menu .el-menu--inline .el-menu-item.is-active {
+:deep(.sidebar-menu .el-menu--inline .el-menu-item.is-active) {
   background: var(--theme-sidebar-active, #3d6bb3) !important;
   color: #ffffff !important;
 }
 
-.sidebar-menu .el-menu--inline .el-menu-item.is-active .el-icon {
+:deep(.sidebar-menu .el-menu--inline .el-menu-item.is-active .el-icon) {
   color: #ffffff !important;
-}
-
-.sidebar-menu .el-menu--inline .el-menu-item.is-active {
-  background: var(--theme-sidebar-active, #3d6bb3);
-  color: #ffffff;
-}
-
-.sidebar-menu .el-menu--inline .el-menu-item.is-active .el-icon {
-  color: #ffffff;
 }
 
 /* 收缩按钮 */
