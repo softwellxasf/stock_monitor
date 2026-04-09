@@ -7,7 +7,6 @@
           <span v-if="!isCollapse">📊 stockMonitor</span>
           <span v-else>📊</span>
         </div>
-        
         <el-menu
           :default-active="activeMenu"
           :collapse="isCollapse"
@@ -15,57 +14,22 @@
           router
           class="sidebar-menu"
         >
-          <!-- 实盘分类 -->
-          <el-sub-menu index="real">
-            <template #title>
-              <el-icon><Briefcase /></el-icon>
-              <span>实盘</span>
-            </template>
-            <el-menu-item index="/real/positions">
-              <el-icon><List /></el-icon>
-              <template #title>实盘持仓</template>
-            </el-menu-item>
-            <el-menu-item index="/real/trades">
-              <el-icon><Document /></el-icon>
-              <template #title>交易记录</template>
-            </el-menu-item>
-            <el-menu-item index="/real/analysis">
-              <el-icon><TrendCharts /></el-icon>
-              <template #title>收益分析</template>
-            </el-menu-item>
-          </el-sub-menu>
-          
-          <!-- 模拟分类 -->
-          <el-sub-menu index="sim">
-            <template #title>
-              <el-icon><Coin /></el-icon>
-              <span>模拟</span>
-            </template>
-            <el-menu-item index="/sim">
-              <el-icon><Home /></el-icon>
-              <template #title>模拟概览</template>
-            </el-menu-item>
-            <el-menu-item index="/sim/positions">
-              <el-icon><List /></el-icon>
-              <template #title>模拟持仓</template>
-            </el-menu-item>
-          </el-sub-menu>
-          
-          <!-- 公共功能 -->
-          <el-sub-menu index="common">
-            <template #title>
-              <el-icon><Menu /></el-icon>
-              <span>公共</span>
-            </template>
-            <el-menu-item index="/watchlist">
-              <el-icon><Star /></el-icon>
-              <template #title>自选列表</template>
-            </el-menu-item>
-            <el-menu-item index="/stats">
-              <el-icon><DataAnalysis /></el-icon>
-              <template #title>统计分析</template>
-            </el-menu-item>
-          </el-sub-menu>
+          <el-menu-item index="/">
+            <el-icon><Home /></el-icon>
+            <template #title>首页</template>
+          </el-menu-item>
+          <el-menu-item index="/positions">
+            <el-icon><List /></el-icon>
+            <template #title>持仓</template>
+          </el-menu-item>
+          <el-menu-item index="/watchlist">
+            <el-icon><Star /></el-icon>
+            <template #title>自选</template>
+          </el-menu-item>
+          <el-menu-item index="/stats">
+            <el-icon><DataAnalysis /></el-icon>
+            <template #title>统计</template>
+          </el-menu-item>
         </el-menu>
         
         <!-- 收缩按钮 -->
@@ -87,10 +51,6 @@
             </el-breadcrumb>
           </div>
           <div class="header-right">
-            <ThemeSwitcher />
-            <el-tag :type="currentMode === 'real' ? 'warning' : (currentMode === 'sim' ? 'success' : 'info')" size="small" style="margin-right: 15px">
-              {{ modeLabel }}
-            </el-tag>
             <el-dropdown @command="handleCommand">
               <span class="user-info">
                 <el-avatar :size="32" icon="User" />
@@ -118,7 +78,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import ThemeSwitcher from '../components/ThemeSwitcher.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -128,25 +87,10 @@ const username = ref('admin')
 
 const activeMenu = computed(() => route.path)
 
-const currentMode = computed(() => {
-  if (route.path.startsWith('/real')) return 'real'
-  if (route.path.startsWith('/sim')) return 'sim'
-  return 'common'
-})
-
-const modeLabel = computed(() => {
-  if (currentMode.value === 'real') return '实盘模式'
-  if (currentMode.value === 'sim') return '模拟模式'
-  return '公共功能'
-})
-
 const pageTitle = computed(() => {
   const titles = {
-    '/real/positions': '实盘持仓',
-    '/real/trades': '交易记录',
-    '/real/analysis': '收益分析',
-    '/sim': '模拟概览',
-    '/sim/positions': '模拟持仓',
+    '/': '概览',
+    '/positions': '持仓管理',
     '/watchlist': '自选列表',
     '/stats': '统计分析'
   }
@@ -175,6 +119,7 @@ const handleCommand = async (command) => {
 }
 
 onMounted(() => {
+  // 从 token 中解析用户名（简化版，实际应该解析 JWT）
   const token = localStorage.getItem('token')
   if (token) {
     try {
@@ -197,7 +142,7 @@ onMounted(() => {
 }
 
 .sidebar {
-  background: var(--theme-sidebar, #2a384a);
+  background: #304156;
   transition: width 0.3s;
   position: relative;
   overflow: hidden;
@@ -211,62 +156,29 @@ onMounted(() => {
   color: #fff;
   font-size: 18px;
   font-weight: bold;
-  background: rgba(0,0,0,0.2);
+  background: #263445;
 }
 
 .sidebar-menu {
   border-right: none;
-  background: var(--theme-sidebar, #2a384a);
+  background: #304156;
 }
 
 .sidebar-menu:not(.el-menu--collapse) {
   width: 220px;
 }
 
-/* 菜单项默认样式 */
-.sidebar-menu .el-menu-item,
-.sidebar-menu .el-sub-menu__title {
-  color: #b0c4d8;
-  background: var(--theme-sidebar, #2a384a);
-  transition: all 0.3s ease;
+.sidebar-menu .el-menu-item {
+  color: #bfcbd9;
 }
 
-/* 悬停效果 */
-.sidebar-menu .el-menu-item:hover,
-.sidebar-menu .el-sub-menu__title:hover {
-  background: var(--theme-sidebar-hover, #324157);
-  color: #cfe1f3;
+.sidebar-menu .el-menu-item:hover {
+  background: #263445;
 }
 
-/* 选中状态 */
 .sidebar-menu .el-menu-item.is-active {
-  background: var(--theme-sidebar-active, #3d5068);
+  background: #409EFF;
   color: #fff;
-  box-shadow: inset 3px 0 0 var(--theme-primary, #409EFF);
-}
-
-/* 实盘子菜单激活 */
-.sidebar-menu .el-sub-menu[index="real"] .el-menu-item.is-active {
-  box-shadow: inset 3px 0 0 #e6a23c;
-}
-
-/* 模拟子菜单激活 */
-.sidebar-menu .el-sub-menu[index="sim"] .el-menu-item.is-active {
-  box-shadow: inset 3px 0 0 #67c23a;
-}
-
-/* 公共子菜单激活 */
-.sidebar-menu .el-sub-menu[index="common"] .el-menu-item.is-active {
-  box-shadow: inset 3px 0 0 var(--theme-primary, #409EFF);
-}
-
-/* 子菜单展开背景 */
-.sidebar-menu .el-menu--inline {
-  background: rgba(0,0,0,0.15);
-}
-
-.sidebar-menu .el-menu--inline .el-menu-item {
-  background: var(--theme-sidebar, #2a384a);
 }
 
 .collapse-btn {
@@ -276,18 +188,18 @@ onMounted(() => {
   transform: translateX(-50%);
   width: 40px;
   height: 40px;
-  background: rgba(0,0,0,0.3);
+  background: #263445;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: background 0.3s;
 }
 
 .collapse-btn:hover {
-  background: var(--theme-primary, #409EFF);
+  background: #409EFF;
 }
 
 .header {
