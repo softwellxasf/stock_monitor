@@ -30,6 +30,10 @@
               <el-icon><List /></el-icon>
               <template #title>模拟持仓</template>
             </el-menu-item>
+            <el-menu-item index="/sim/trades">
+              <el-icon><Document /></el-icon>
+              <template #title>交易记录</template>
+            </el-menu-item>
           </el-sub-menu>
           
           <!-- 实盘分类 -->
@@ -123,6 +127,7 @@ const pageTitle = computed(() => {
   const titles = {
     '/sim': '模拟概览',
     '/sim/positions': '模拟持仓',
+    '/sim/trades': '模拟交易记录',
     '/real/positions': '实盘持仓',
     '/real/trades': '交易记录',
     '/real/analysis': '收益分析',

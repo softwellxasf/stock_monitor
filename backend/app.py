@@ -56,6 +56,24 @@ class SimPosition(db.Model):
     sell_date = db.Column(db.DateTime)
     sell_price = db.Column(db.Numeric(10,2))
 
+class SimTrade(db.Model):
+    """模拟交易记录表"""
+    __tablename__ = 'sim_trades'
+    id = db.Column(db.Integer, primary_key=True)
+    stock_code = db.Column(db.String(20), nullable=False)
+    stock_name = db.Column(db.String(100), nullable=False)
+    direction = db.Column(db.String(10), nullable=False)  # BUY/SELL
+    price = db.Column(db.Numeric(10,4), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    amount = db.Column(db.Numeric(20,4))
+    trade_date = db.Column(db.DateTime, nullable=False)
+    strategy = db.Column(db.String(50))
+    remark = db.Column(db.String(200))
+    profit_loss = db.Column(db.Numeric(20,4), default=0)
+    profit_loss_pct = db.Column(db.Numeric(10,4), default=0)
+    fee = db.Column(db.Numeric(10,4), default=0)
+    created_at = db.Column(db.DateTime)
+
 class Watchlist(db.Model):
     __tablename__ = 'watchlist'
     id = db.Column(db.Integer, primary_key=True)
@@ -212,6 +230,86 @@ def get_sim_positions():
             'highest_price': float(p.highest_price),
             'buy_date': p.buy_date.strftime('%Y-%m-%d') if p.buy_date else None,
             'profit_pct': 0
+        })
+
+    return jsonify({
+        'success': True,
+        'data': result,
+        'total': total,
+        'page': page,
+        'page_size': page_size
+    })
+
+@app.route('/api/sim-trades', methods=['GET'])
+@jwt_required()
+def get_sim_trades():
+    """获取模拟交易记录（支持搜索和分页）"""
+    # 获取查询参数
+    page = request.args.get('page', 1, type=int)
+    page_size = request.args.get('page_size', 20, type=int)
+    keyword = request.args.get('keyword', '')
+    direction = request.args.get('direction', '')
+    start_date = request.args.get('start_date', '')
+    end_date = request.args.get('end_date', '')
+
+    # 构建查询
+    query = db.session.query(
+        SimTrade.id,
+        SimTrade.stock_code,
+        SimTrade.stock_name,
+        SimTrade.direction,
+        SimTrade.price,
+        SimTrade.quantity,
+        SimTrade.amount,
+        SimTrade.trade_date,
+        SimTrade.strategy,
+        SimTrade.remark,
+        SimTrade.profit_loss,
+        SimTrade.profit_loss_pct,
+        SimTrade.fee,
+        SimTrade.created_at
+    )
+
+    # 条件过滤
+    if keyword:
+        query = query.filter(
+            db.or_(
+                SimTrade.stock_code.like(f'%{keyword}%'),
+                SimTrade.stock_name.like(f'%{keyword}%'),
+                SimTrade.remark.like(f'%{keyword}%')
+            )
+        )
+    if direction:
+        query = query.filter(SimTrade.direction == direction)
+    if start_date:
+        query = query.filter(SimTrade.trade_date >= start_date)
+    if end_date:
+        query = query.filter(SimTrade.trade_date <= end_date)
+
+    # 总数
+    total = query.count()
+
+    # 分页排序
+    trades = query.order_by(SimTrade.trade_date.desc()).offset(
+        (page - 1) * page_size
+    ).limit(page_size).all()
+
+    result = []
+    for t in trades:
+        result.append({
+            'id': t.id,
+            'stock_code': t.stock_code,
+            'stock_name': t.stock_name or '',
+            'direction': t.direction,
+            'price': float(t.price),
+            'quantity': t.quantity,
+            'amount': float(t.amount) if t.amount else 0,
+            'trade_date': t.trade_date.strftime('%Y-%m-%d %H:%M') if t.trade_date else None,
+            'strategy': t.strategy,
+            'remark': t.remark,
+            'profit_loss': float(t.profit_loss) if t.profit_loss else 0,
+            'profit_loss_pct': float(t.profit_loss_pct) if t.profit_loss_pct else 0,
+            'fee': float(t.fee) if t.fee else 0
         })
 
     return jsonify({

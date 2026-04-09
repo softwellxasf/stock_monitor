@@ -25,6 +25,12 @@ const routes = [
         meta: { requiresAuth: true, title: '模拟持仓' }
       },
       {
+        path: 'sim/trades',
+        name: 'SimTrades',
+        component: () => import('../views/SimTrades.vue'),
+        meta: { requiresAuth: true, title: '模拟交易记录' }
+      },
+      {
         path: 'real/positions',
         name: 'RealPositions',
         component: () => import('../views/RealPositions.vue'),

@@ -21,6 +21,7 @@ export const auth = {
 export const sim = {
   getAccount: () => api.get('/sim-account'),
   getPositions: (params) => api.get('/sim-positions', { params }),
+  getTrades: (params) => api.get('/sim-trades', { params }),
   getStats: () => api.get('/stats')
 }
 
