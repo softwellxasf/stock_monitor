@@ -175,8 +175,32 @@ def get_sim_account():
 @app.route('/api/sim-positions', methods=['GET'])
 @jwt_required()
 def get_sim_positions():
-    positions = SimPosition.query.filter(SimPosition.quantity > 0).all()
-    
+    """获取模拟持仓列表（支持搜索和分页）"""
+    # 获取查询参数
+    page = request.args.get('page', 1, type=int)
+    page_size = request.args.get('page_size', 20, type=int)
+    keyword = request.args.get('keyword', '')
+
+    # 构建查询
+    query = SimPosition.query.filter(SimPosition.quantity > 0)
+
+    # 条件过滤
+    if keyword:
+        query = query.filter(
+            db.or_(
+                SimPosition.stock_code.like(f'%{keyword}%'),
+                SimPosition.stock_name.like(f'%{keyword}%')
+            )
+        )
+
+    # 总数
+    total = query.count()
+
+    # 分页排序
+    positions = query.order_by(SimPosition.buy_date.desc()).offset(
+        (page - 1) * page_size
+    ).limit(page_size).all()
+
     result = []
     for p in positions:
         result.append({
@@ -189,8 +213,14 @@ def get_sim_positions():
             'buy_date': p.buy_date.strftime('%Y-%m-%d') if p.buy_date else None,
             'profit_pct': 0
         })
-    
-    return jsonify({'success': True, 'data': result})
+
+    return jsonify({
+        'success': True,
+        'data': result,
+        'total': total,
+        'page': page,
+        'page_size': page_size
+    })
 
 @app.route('/api/watchlist', methods=['GET'])
 @jwt_required()

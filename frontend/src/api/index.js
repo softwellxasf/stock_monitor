@@ -20,7 +20,7 @@ export const auth = {
 
 export const sim = {
   getAccount: () => api.get('/sim-account'),
-  getPositions: () => api.get('/sim-positions'),
+  getPositions: (params) => api.get('/sim-positions', { params }),
   getStats: () => api.get('/stats')
 }
 
