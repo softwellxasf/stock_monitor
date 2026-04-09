@@ -74,6 +74,7 @@
             </el-breadcrumb>
           </div>
           <div class="header-right">
+            <ThemeSwitcher />
             <el-dropdown @command="handleCommand">
               <span class="user-info">
                 <el-avatar :size="32" icon="User" />
@@ -101,13 +102,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import ThemeSwitcher from '../components/ThemeSwitcher.vue'
 
 const route = useRoute()
 const router = useRouter()
-
 const isCollapse = ref(false)
 const username = ref('admin')
-
 const activeMenu = computed(() => route.path)
 
 const pageTitle = computed(() => {
@@ -121,9 +121,7 @@ const pageTitle = computed(() => {
   return titles[route.path] || ''
 })
 
-const toggleCollapse = () => {
-  isCollapse.value = !isCollapse.value
-}
+const toggleCollapse = () => { isCollapse.value = !isCollapse.value }
 
 const handleCommand = async (command) => {
   if (command === 'logout') {
@@ -136,9 +134,7 @@ const handleCommand = async (command) => {
       localStorage.removeItem('token')
       ElMessage.success('已退出登录')
       router.push('/login')
-    } catch {
-      // 取消退出
-    }
+    } catch {}
   }
 }
 
@@ -156,16 +152,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.main-layout {
-  min-height: 100vh;
-}
-
-.el-container {
-  height: 100vh;
-}
+.main-layout { min-height: 100vh; }
+.el-container { height: 100vh; }
 
 .sidebar {
-  background: #304156;
+  background: var(--theme-sidebar, #304156);
   transition: width 0.3s;
   position: relative;
   overflow: hidden;
@@ -179,19 +170,12 @@ onMounted(() => {
   color: #fff;
   font-size: 18px;
   font-weight: bold;
-  background: #263445;
+  background: rgba(0,0,0,0.2);
 }
 
-.sidebar-menu {
-  border-right: none;
-  background: #304156;
-}
+.sidebar-menu { border-right: none; background: transparent; }
+.sidebar-menu:not(.el-menu--collapse) { width: 220px; }
 
-.sidebar-menu:not(.el-menu--collapse) {
-  width: 220px;
-}
-
-/* 菜单项默认样式 */
 .sidebar-menu .el-menu-item,
 .sidebar-menu .el-sub-menu__title {
   color: #bfcbd9;
@@ -199,12 +183,12 @@ onMounted(() => {
 
 .sidebar-menu .el-menu-item:hover,
 .sidebar-menu .el-sub-menu__title:hover {
-  background: #263445;
+  background: var(--theme-sidebar-hover, #263445);
   color: #fff;
 }
 
 .sidebar-menu .el-menu-item.is-active {
-  background: #409EFF;
+  background: var(--theme-sidebar-active, #409EFF);
   color: #fff;
 }
 
@@ -215,7 +199,7 @@ onMounted(() => {
   transform: translateX(-50%);
   width: 40px;
   height: 40px;
-  background: #263445;
+  background: rgba(0,0,0,0.3);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -225,9 +209,7 @@ onMounted(() => {
   transition: background 0.3s;
 }
 
-.collapse-btn:hover {
-  background: #409EFF;
-}
+.collapse-btn:hover { background: var(--theme-primary, #409EFF); }
 
 .header {
   background: #fff;
@@ -239,30 +221,9 @@ onMounted(() => {
   height: 60px;
 }
 
-.header-left {
-  flex: 1;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-}
-
-.username {
-  color: #606266;
-  font-size: 14px;
-}
-
-.main-content {
-  background: #f5f7fa;
-  padding: 20px;
-  overflow-y: auto;
-}
+.header-left { flex: 1; }
+.header-right { display: flex; align-items: center; }
+.user-info { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.username { color: #606266; font-size: 14px; }
+.main-content { background: #f5f7fa; padding: 20px; overflow-y: auto; }
 </style>

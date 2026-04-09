@@ -9,7 +9,6 @@ import router from './router'
 const app = createApp(App)
 const pinia = createPinia()
 
-// 注册所有图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
@@ -17,5 +16,4 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 app.use(pinia)
 app.use(router)
 app.use(ElementPlus)
-
 app.mount('#app')
