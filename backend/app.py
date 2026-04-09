@@ -57,22 +57,43 @@ class SimPosition(db.Model):
     sell_price = db.Column(db.Numeric(10,2))
 
 class SimTrade(db.Model):
-    """模拟交易记录表"""
+    """模拟交易记录表 (映射到 sim_trades 表)"""
     __tablename__ = 'sim_trades'
     id = db.Column(db.Integer, primary_key=True)
     stock_code = db.Column(db.String(20), nullable=False)
     stock_name = db.Column(db.String(100), nullable=False)
-    direction = db.Column(db.String(10), nullable=False)  # BUY/SELL
-    price = db.Column(db.Numeric(10,4), nullable=False)
+    action = db.Column(db.Enum('BUY', 'SELL'), nullable=False)  # 数据库中是 action
+    price = db.Column(db.Numeric(10,2), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
-    amount = db.Column(db.Numeric(20,4))
+    amount = db.Column(db.Numeric(12,2), nullable=False)
     trade_date = db.Column(db.DateTime, nullable=False)
-    strategy = db.Column(db.String(50))
-    remark = db.Column(db.String(200))
-    profit_loss = db.Column(db.Numeric(20,4), default=0)
-    profit_loss_pct = db.Column(db.Numeric(10,4), default=0)
-    fee = db.Column(db.Numeric(10,4), default=0)
+    reason = db.Column(db.String(200))  # 数据库中是 reason
     created_at = db.Column(db.DateTime)
+
+    # 别名属性，方便代码使用
+    @property
+    def direction(self):
+        return self.action
+
+    @property
+    def strategy(self):
+        return self.reason
+
+    @property
+    def remark(self):
+        return None
+
+    @property
+    def profit_loss(self):
+        return 0
+
+    @property
+    def profit_loss_pct(self):
+        return 0
+
+    @property
+    def fee(self):
+        return 0
 
 class Watchlist(db.Model):
     __tablename__ = 'watchlist'
@@ -264,21 +285,17 @@ def get_sim_trades():
     start_date = request.args.get('start_date', '')
     end_date = request.args.get('end_date', '')
 
-    # 构建查询
+    # 构建查询 - 使用数据库实际字段名
     query = db.session.query(
         SimTrade.id,
         SimTrade.stock_code,
         SimTrade.stock_name,
-        SimTrade.direction,
+        SimTrade.action,
         SimTrade.price,
         SimTrade.quantity,
         SimTrade.amount,
         SimTrade.trade_date,
-        SimTrade.strategy,
-        SimTrade.remark,
-        SimTrade.profit_loss,
-        SimTrade.profit_loss_pct,
-        SimTrade.fee,
+        SimTrade.reason,
         SimTrade.created_at
     )
 
@@ -287,12 +304,11 @@ def get_sim_trades():
         query = query.filter(
             db.or_(
                 SimTrade.stock_code.like(f'%{keyword}%'),
-                SimTrade.stock_name.like(f'%{keyword}%'),
-                SimTrade.remark.like(f'%{keyword}%')
+                SimTrade.stock_name.like(f'%{keyword}%')
             )
         )
     if direction:
-        query = query.filter(SimTrade.direction == direction)
+        query = query.filter(SimTrade.action == direction)
     if start_date:
         query = query.filter(SimTrade.trade_date >= start_date)
     if end_date:
@@ -312,16 +328,16 @@ def get_sim_trades():
             'id': t.id,
             'stock_code': t.stock_code,
             'stock_name': t.stock_name or '',
-            'direction': t.direction,
+            'direction': t.action,
             'price': float(t.price),
             'quantity': t.quantity,
             'amount': float(t.amount) if t.amount else 0,
             'trade_date': t.trade_date.strftime('%Y-%m-%d %H:%M') if t.trade_date else None,
-            'strategy': t.strategy,
-            'remark': t.remark,
-            'profit_loss': float(t.profit_loss) if t.profit_loss else 0,
-            'profit_loss_pct': float(t.profit_loss_pct) if t.profit_loss_pct else 0,
-            'fee': float(t.fee) if t.fee else 0
+            'strategy': t.reason,
+            'remark': '',
+            'profit_loss': 0,
+            'profit_loss_pct': 0,
+            'fee': 0
         })
 
     return jsonify({
