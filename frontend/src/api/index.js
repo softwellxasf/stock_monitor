@@ -28,4 +28,11 @@ export const watchlist = {
   getList: () => api.get('/watchlist')
 }
 
+export const actual = {
+  getPositions: () => api.get('/actual-positions'),
+  getTrades: (params) => api.get('/actual-trades', { params }),
+  getStats: () => api.get('/actual-stats'),
+  getAnalysis: () => api.get('/actual-analysis')
+}
+
 export default api

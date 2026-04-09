@@ -12,6 +12,9 @@
 
 - ✅ 用户登录/注册（JWT 认证）
 - ✅ 模拟盘持仓管理
+- ✅ 实盘持仓展示（复用 stockProject 数据库）
+- ✅ 实盘交易记录展示
+- ✅ 实盘收益统计
 - ✅ 自选表查看
 - ✅ 账户统计分析
 - ✅ 实时数据展示
@@ -50,10 +53,15 @@ npm run dev
 
 ## 数据表
 
+### stockMonitor 自建表
 - `sm_users` - 用户表
 - `sim_account` - 模拟账户
 - `sim_positions` - 模拟持仓
 - `watchlist` - 自选表
+
+### 复用 stockProject 数据库表（实盘）
+- `positions` - 实盘持仓表
+- `trades` - 实盘交易记录表
 
 ## 项目结构
 
@@ -80,7 +88,10 @@ stockMonitor/
 | /api/login | POST | 用户登录 |
 | /api/register | POST | 用户注册 |
 | /api/sim-account | GET | 获取模拟账户 |
-| /api/sim-positions | GET | 获取持仓列表 |
+| /api/sim-positions | GET | 获取模拟持仓 |
+| /api/actual-positions | GET | 获取实盘持仓 |
+| /api/actual-trades | GET | 获取实盘交易记录 |
+| /api/actual-stats | GET | 获取实盘统计数据 |
 | /api/watchlist | GET | 获取自选表 |
 | /api/stats | GET | 获取统计数据 |
 

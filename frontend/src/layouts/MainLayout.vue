@@ -42,6 +42,14 @@
               <el-icon><Briefcase /></el-icon>
               <template #title>实盘持仓</template>
             </el-menu-item>
+            <el-menu-item index="/real/trades">
+              <el-icon><Document /></el-icon>
+              <template #title>交易记录</template>
+            </el-menu-item>
+            <el-menu-item index="/real/analysis">
+              <el-icon><DataAnalysis /></el-icon>
+              <template #title>收益分析</template>
+            </el-menu-item>
           </el-sub-menu>
           
           <!-- 公共功能 -->
@@ -116,6 +124,8 @@ const pageTitle = computed(() => {
     '/sim': '模拟概览',
     '/sim/positions': '模拟持仓',
     '/real/positions': '实盘持仓',
+    '/real/trades': '交易记录',
+    '/real/analysis': '收益分析',
     '/watchlist': '自选列表',
     '/stats': '统计分析'
   }
@@ -185,44 +195,81 @@ onMounted(() => {
   width: 220px;
 }
 
-/* 一级菜单（子菜单标题）和二级菜单统一颜色 */
+/* 一级菜单（子菜单标题）和二级菜单统一颜色 - 强制覆盖 Element Plus 默认样式 */
 .sidebar-menu .el-menu-item,
 .sidebar-menu .el-sub-menu__title {
-  color: rgba(255, 255, 255, 0.85);
+  color: #ffffff !important;
   font-size: 14px;
   background: transparent;
+}
+
+/* 菜单项图标颜色 */
+.sidebar-menu .el-menu-item .el-icon,
+.sidebar-menu .el-sub-menu__title .el-icon,
+.sidebar-menu .el-sub-menu__title i {
+  color: #ffffff !important;
 }
 
 /* 悬停效果 - 一级和二级统一 */
 .sidebar-menu .el-menu-item:hover,
 .sidebar-menu .el-sub-menu__title:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 1);
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+.sidebar-menu .el-menu-item:hover .el-icon,
+.sidebar-menu .el-sub-menu__title:hover .el-icon {
+  color: #ffffff !important;
 }
 
 /* 选中状态 - 使用主题色 */
 .sidebar-menu .el-menu-item.is-active {
-  background: var(--theme-sidebar-active, #3d6bb3);
-  color: rgba(255, 255, 255, 1);
+  background: var(--theme-sidebar-active, #3d6bb3) !important;
+  color: #ffffff !important;
+}
+
+.sidebar-menu .el-menu-item.is-active .el-icon {
+  color: #ffffff !important;
 }
 
 /* 子菜单展开背景 - 轻微加深 */
 .sidebar-menu .el-menu--inline {
-  background: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.12) !important;
 }
 
 .sidebar-menu .el-menu--inline .el-menu-item {
-  color: rgba(255, 255, 255, 0.8);
+  color: #ffffff !important;
+}
+
+.sidebar-menu .el-menu--inline .el-menu-item .el-icon {
+  color: #ffffff !important;
 }
 
 .sidebar-menu .el-menu--inline .el-menu-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 1);
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+.sidebar-menu .el-menu--inline .el-menu-item:hover .el-icon {
+  color: #ffffff !important;
+}
+
+.sidebar-menu .el-menu--inline .el-menu-item.is-active {
+  background: var(--theme-sidebar-active, #3d6bb3) !important;
+  color: #ffffff !important;
+}
+
+.sidebar-menu .el-menu--inline .el-menu-item.is-active .el-icon {
+  color: #ffffff !important;
 }
 
 .sidebar-menu .el-menu--inline .el-menu-item.is-active {
   background: var(--theme-sidebar-active, #3d6bb3);
-  color: rgba(255, 255, 255, 1);
+  color: #ffffff;
+}
+
+.sidebar-menu .el-menu--inline .el-menu-item.is-active .el-icon {
+  color: #ffffff;
 }
 
 /* 收缩按钮 */

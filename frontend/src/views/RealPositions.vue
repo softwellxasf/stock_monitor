@@ -7,26 +7,23 @@
           <el-tag type="warning" size="small">实盘</el-tag>
         </div>
       </template>
-      
-      <el-alert
-        title="实盘数据接入中..."
-        type="warning"
-        :closable="false"
-        style="margin-bottom: 20px"
-        show-icon
-      >
-        实盘数据需要从券商 API 或手动导入，当前显示示例数据
-      </el-alert>
-      
-      <el-table :data="sampleData" stripe style="width: 100%">
+
+      <el-table :data="positions" stripe style="width: 100%" v-loading="loading">
         <el-table-column prop="stock_code" label="代码" width="120" />
-        <el-table-column prop="stock_name" label="名称" width="120" />
+        <el-table-column prop="stock_name" label="名称" width="100" />
+        <el-table-column prop="industry" label="行业" width="100" />
         <el-table-column prop="quantity" label="数量" width="100" />
         <el-table-column prop="cost_price" label="成本价" width="100">
-          <template #default="{ row }">¥{{ row.cost_price?.toFixed(2) }}</template>
+          <template #default="{ row }">¥{{ row.cost_price?.toFixed(4) }}</template>
         </el-table-column>
         <el-table-column prop="current_price" label="现价" width="100">
-          <template #default="{ row }">¥{{ row.current_price?.toFixed(2) }}</template>
+          <template #default="{ row }">¥{{ row.current_price?.toFixed(4) }}</template>
+        </el-table-column>
+        <el-table-column prop="highest_price" label="最高价" width="100">
+          <template #default="{ row }">¥{{ row.highest_price?.toFixed(4) }}</template>
+        </el-table-column>
+        <el-table-column prop="stop_loss_price" label="止损价" width="100">
+          <template #default="{ row }">¥{{ row.stop_loss_price?.toFixed(4) }}</template>
         </el-table-column>
         <el-table-column label="盈亏比例" width="120">
           <template #default="{ row }">
@@ -35,23 +32,44 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150">
+        <el-table-column label="止损类型" width="100">
           <template #default="{ row }">
-            <el-button type="primary" size="small" link>详情</el-button>
-            <el-button type="danger" size="small" link>卖出</el-button>
+            <el-tag :type="row.stop_loss_type === 'trailing' ? 'warning' : 'info'" size="small">
+              {{ row.stop_loss_type === 'trailing' ? '移动' : '固定' }}
+            </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="created_at" label="建仓时间" width="160" />
+        <el-table-column prop="updated_at" label="更新时间" width="160" />
       </el-table>
     </el-card>
   </div>
 </template>
 
 <script setup>
-const sampleData = [
-  { stock_code: '600519.SH', stock_name: '贵州茅台', quantity: 100, cost_price: 1680.00, current_price: 1750.00, profit_pct: 4.17 },
-  { stock_code: '000858.SZ', stock_name: '五粮液', quantity: 500, cost_price: 95.00, current_price: 92.00, profit_pct: -3.16 },
-  { stock_code: '300750.SZ', stock_name: '宁德时代', quantity: 200, cost_price: 180.00, current_price: 195.00, profit_pct: 8.33 }
-]
+import { ref, onMounted } from 'vue'
+import { actual } from '../api'
+
+const positions = ref([])
+const loading = ref(false)
+
+const loadPositions = async () => {
+  loading.value = true
+  try {
+    const res = await actual.getPositions()
+    if (res.data.success) {
+      positions.value = res.data.data
+    }
+  } catch (error) {
+    console.error('加载实盘持仓失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  loadPositions()
+})
 </script>
 
 <style scoped>

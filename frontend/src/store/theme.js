@@ -38,20 +38,24 @@ const themes = {
 }
 
 export const useThemeStore = defineStore('theme', () => {
-  const currentTheme = ref(localStorage.getItem('theme') || 'navy')
-  
+  const storedTheme = localStorage.getItem('theme')
+  const currentTheme = ref(storedTheme && themes[storedTheme] ? storedTheme : 'navy')
+
   const themeData = computed(() => themes[currentTheme.value])
-  
+
   function setTheme(themeName) {
+    if (!themes[themeName]) return
     currentTheme.value = themeName
     localStorage.setItem('theme', themeName)
     applyTheme(themeName)
   }
-  
+
   function applyTheme(themeName) {
     const theme = themes[themeName]
+    if (!theme) return
+
     const root = document.documentElement
-    
+
     root.style.setProperty('--theme-primary', theme.primary)
     root.style.setProperty('--theme-title', theme.title)
     root.style.setProperty('--theme-text', theme.text)
@@ -66,8 +70,11 @@ export const useThemeStore = defineStore('theme', () => {
     root.style.setProperty('--theme-sidebar-hover', theme.sidebarHover)
     root.style.setProperty('--theme-sidebar-active', theme.sidebarActive)
   }
-  
-  applyTheme(currentTheme.value)
-  
+
+  // 确保 themes 对象已加载后再应用主题
+  if (currentTheme.value && themes[currentTheme.value]) {
+    applyTheme(currentTheme.value)
+  }
+
   return { currentTheme, themeData, setTheme }
 })
