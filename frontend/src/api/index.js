@@ -22,7 +22,8 @@ export const sim = {
   getAccount: () => api.get('/sim-account'),
   getPositions: (params) => api.get('/sim-positions', { params }),
   getTrades: (params) => api.get('/sim-trades', { params }),
-  getStats: () => api.get('/stats')
+  getStats: () => api.get('/sim-stats'),
+  getAnalysis: () => api.get('/sim-analysis')
 }
 
 export const watchlist = {

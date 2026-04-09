@@ -136,6 +136,18 @@ class DailySnapshot(db.Model):
     total_return = db.Column(db.Numeric(10,4))
     created_at = db.Column(db.DateTime)
 
+class SimDailySnapshot(db.Model):
+    """模拟盘每日收盘快照"""
+    __tablename__ = 'sim_daily_snapshots'
+    id = db.Column(db.Integer, primary_key=True)
+    snapshot_date = db.Column(db.Date)
+    total_asset = db.Column(db.Numeric(15,2))
+    cash = db.Column(db.Numeric(20,4))
+    position_value = db.Column(db.Numeric(20,4))
+    daily_return = db.Column(db.Numeric(10,4))
+    total_return = db.Column(db.Numeric(10,4))
+    created_at = db.Column(db.DateTime)
+
 # ============== API 路由 ==============
 
 @app.route('/api/login', methods=['POST'])
@@ -700,6 +712,196 @@ def get_stats():
     }
     
     return jsonify({'success': True, 'data': stats})
+
+@app.route('/api/sim-stats', methods=['GET'])
+@jwt_required()
+def get_sim_stats():
+    """获取模拟盘统计数据"""
+    # 持仓数量
+    position_count = SimPosition.query.filter(SimPosition.quantity > 0).count()
+
+    # 交易记录数量
+    trade_count = SimTrade.query.count()
+
+    # 计算总持仓市值和总成本
+    positions = SimPosition.query.filter(SimPosition.quantity > 0).all()
+    total_market_value = sum(
+        0  # 模拟盘暂不计算实时市值
+        for p in positions
+    )
+    total_cost = sum(
+        (float(p.cost_price) if p.cost_price else 0) * p.quantity
+        for p in positions
+    )
+
+    # 计算总盈亏（从 trades 表累计卖出盈亏）
+    total_profit = db.session.query(db.func.sum(SimTrade.profit_loss)).filter(
+        SimTrade.direction == 'SELL',
+        SimTrade.profit_loss != 0
+    ).scalar() or 0
+
+    # 账户信息
+    account = SimAccount.query.filter_by(id=1).first()
+
+    # 如果有账户，计算收益率
+    if account and account.total_capital:
+        profit_pct = ((float(account.total_value) - float(account.total_capital)) / float(account.total_capital) * 100)
+    else:
+        profit_pct = 0
+
+    return jsonify({
+        'success': True,
+        'data': {
+            'position_count': position_count,
+            'trade_count': trade_count,
+            'total_market_value': round(total_market_value, 2),
+            'total_cost': round(total_cost, 2),
+            'total_profit': round(float(total_profit), 2),
+            'profit_pct': round(profit_pct, 2)
+        }
+    })
+
+@app.route('/api/sim-analysis', methods=['GET'])
+@jwt_required()
+def get_sim_analysis():
+    """获取模拟盘收益分析数据（日/周/月收益率 + 日历热力图）"""
+    # 获取所有快照数据
+    snapshots = SimDailySnapshot.query.order_by(SimDailySnapshot.snapshot_date.desc()).all()
+
+    if not snapshots:
+        return jsonify({
+            'success': True,
+            'data': {
+                'daily_returns': [],
+                'weekly_returns': [],
+                'monthly_returns': [],
+                'calendar_data': [],
+                'monthly_summary': []
+            }
+        })
+
+    # 日收益率数据（最近 30 天，倒序）
+    daily_returns = []
+    for s in snapshots[:30]:
+        daily_returns.append({
+            'date': s.snapshot_date.strftime('%Y-%m-%d') if s.snapshot_date else '',
+            'daily_return': float(s.daily_return) if s.daily_return else 0,
+            'total_return': float(s.total_return) if s.total_return else 0,
+            'total_asset': float(s.total_asset) if s.total_asset else 0
+        })
+    # 按日期倒序（最新的在前）
+    daily_returns.sort(key=lambda x: x['date'], reverse=True)
+
+    # 周收益率统计（按周分组）
+    from collections import defaultdict
+    from datetime import datetime, timedelta
+
+    weekly_data = defaultdict(lambda: {'returns': [], 'dates': []})
+    for s in snapshots:
+        if s.snapshot_date:
+            # ISO calendar: (year, week, weekday)
+            iso_cal = s.snapshot_date.isocalendar()
+            week_key = f"{iso_cal[0]}-W{iso_cal[1]:02d}"
+            weekly_data[week_key]['returns'].append(float(s.daily_return) if s.daily_return else 0)
+            weekly_data[week_key]['dates'].append(s.snapshot_date)
+
+    weekly_returns = []
+    for week, data in sorted(weekly_data.items(), key=lambda x: x[0], reverse=True)[:12]:
+        # 计算这周的日期范围（周一到周日）
+        dates = sorted(data['dates'])
+        first_date = min(dates)
+        # 找到第一个日期所在周的周一
+        monday = first_date - timedelta(days=first_date.weekday())
+        # 周日
+        sunday = monday + timedelta(days=6)
+
+        # 周收益率 = (1 + r1) * (1 + r2) * ... - 1
+        compounded = 1.0
+        for r in data['returns']:
+            compounded *= (1 + r / 100)
+        weekly_ret = (compounded - 1) * 100
+        weekly_returns.append({
+            'week': f"{monday.strftime('%m-%d')} ~ {sunday.strftime('%m-%d')}",
+            'week_start': monday,
+            'weekly_return': round(weekly_ret, 4),
+            'trading_days': len(data['returns'])
+        })
+
+    # 按日期倒序排序（最新的在前）
+    weekly_returns.sort(key=lambda x: x['week_start'], reverse=True)
+
+    # 移除辅助字段
+    for w in weekly_returns:
+        del w['week_start']
+
+    # 月收益率统计（最近 6 个月，倒序）
+    monthly_data = defaultdict(list)
+    for s in snapshots:
+        if s.snapshot_date:
+            month_key = s.snapshot_date.strftime('%Y-%m')
+            monthly_data[month_key].append(float(s.daily_return) if s.daily_return else 0)
+
+    monthly_returns = []
+    for month, daily_rets in sorted(monthly_data.items(), key=lambda x: x[0], reverse=True)[:6]:
+        compounded = 1.0
+        for r in daily_rets:
+            compounded *= (1 + r / 100)
+        monthly_ret = (compounded - 1) * 100
+        monthly_returns.append({
+            'month': month,
+            'monthly_return': round(monthly_ret, 4),
+            'trading_days': len(daily_rets),
+            'positive_days': sum(1 for r in daily_rets if r > 0),
+            'negative_days': sum(1 for r in daily_rets if r < 0)
+        })
+    # 按月份倒序（最新的在前）
+    monthly_returns.sort(key=lambda x: x['month'], reverse=True)
+
+    # 日历热力图数据（最近 6 个月）
+    calendar_data = []
+    for s in snapshots:
+        if s.snapshot_date:
+            calendar_data.append({
+                'date': s.snapshot_date.strftime('%Y-%m-%d'),
+                'return': float(s.daily_return) if s.daily_return else 0,
+                'total_asset': float(s.total_asset) if s.total_asset else 0
+            })
+
+    # 月度汇总统计（最近 6 个月，倒序）
+    monthly_summary = []
+    for month, data in sorted(monthly_data.items(), key=lambda x: x[0], reverse=True)[:6]:
+        compounded = 1.0
+        for r in data:
+            compounded *= (1 + r / 100)
+        monthly_ret = (compounded - 1) * 100
+        positive_days = sum(1 for r in data if r > 0)
+        negative_days = sum(1 for r in data if r < 0)
+        max_daily = max(data) if data else 0
+        min_daily = min(data) if data else 0
+
+        monthly_summary.append({
+            'month': month,
+            'return': round(monthly_ret, 4),
+            'trading_days': len(data),
+            'positive_days': positive_days,
+            'negative_days': negative_days,
+            'win_rate': round(positive_days / len(data) * 100, 2) if data else 0,
+            'max_daily': round(max_daily, 4),
+            'min_daily': round(min_daily, 4)
+        })
+    # 按月份倒序（最新的在前）
+    monthly_summary.sort(key=lambda x: x['month'], reverse=True)
+
+    return jsonify({
+        'success': True,
+        'data': {
+            'daily_returns': daily_returns,
+            'weekly_returns': weekly_returns,
+            'monthly_returns': monthly_returns,
+            'calendar_data': calendar_data,
+            'monthly_summary': monthly_summary
+        }
+    })
 
 @app.route('/api/health', methods=['GET'])
 def health():
