@@ -9,7 +9,7 @@
               <el-icon><Wallet /></el-icon>
             </div>
           </template>
-          <div class="stat-value">¥{{ stats.total_value?.toLocaleString() }}</div>
+          <div class="stat-value">¥{{ stats.total_value?.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</div>
         </el-card>
       </el-col>
       <el-col :span="6">
@@ -20,7 +20,7 @@
               <el-icon><Money /></el-icon>
             </div>
           </template>
-          <div class="stat-value">¥{{ stats.cash?.toLocaleString() }}</div>
+          <div class="stat-value">¥{{ stats.cash?.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</div>
         </el-card>
       </el-col>
       <el-col :span="6">
@@ -49,8 +49,10 @@
 
     <el-card style="margin-top: 20px">
       <template #header><span>模拟盘概况</span></template>
-      <p>初始资金：¥{{ stats.total_capital?.toLocaleString() }}</p>
-      <p v-if="stats.total_capital > 0">当前仓位：{{ ((stats.total_value - stats.cash) / stats.total_capital * 100).toFixed(1) }}%</p>
+      <p>初始资金：¥{{ stats.total_capital?.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</p>
+      <p v-if="stats.total_capital > 0 && stats.total_value > 0">当前仓位：{{ ((stats.total_value - stats.cash) / stats.total_capital * 100).toFixed(1) }}%</p>
+      <p v-if="stats.total_capital > 0">累计收益：¥{{ (stats.total_value - stats.total_capital).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</p>
+      <p v-if="stats.total_capital > 0">收益率：{{ ((stats.total_value - stats.total_capital) / stats.total_capital * 100).toFixed(2) }}%</p>
     </el-card>
   </div>
 </template>
@@ -71,15 +73,36 @@ const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const res = await sim.getStats()
-    if (res.data.success) {
-      stats.value = res.data.data
-    } else {
-      ElMessage.error('加载数据失败')
+    const [accountRes, statsRes, watchlistRes] = await Promise.all([
+      sim.getAccount(),
+      sim.getStats(),
+      sim.getList ? sim.getList() : Promise.resolve({ data: { success: true, data: [] } })
+    ])
+
+    let accountData = {}
+    let statsData = {}
+    let watchlistData = []
+
+    if (accountRes.data.success) {
+      accountData = accountRes.data.data || {}
+    }
+    if (statsRes.data.success) {
+      statsData = statsRes.data.data || {}
+    }
+    if (watchlistRes.data.success) {
+      watchlistData = watchlistRes.data.data || []
+    }
+
+    stats.value = {
+      total_value: accountData.total_value || 0,
+      cash: accountData.cash || 0,
+      total_capital: accountData.total_capital || 0,
+      position_count: statsData.position_count || 0,
+      watchlist_count: watchlistData.length || 0
     }
   } catch (error) {
-    console.error('加载统计数据失败:', error)
-    ElMessage.error('无法连接服务器')
+    console.error('加载数据失败:', error)
+    ElMessage.error('加载数据失败')
   } finally {
     loading.value = false
   }

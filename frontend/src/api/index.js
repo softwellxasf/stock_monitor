@@ -23,7 +23,8 @@ export const sim = {
   getPositions: (params) => api.get('/sim-positions', { params }),
   getTrades: (params) => api.get('/sim-trades', { params }),
   getStats: () => api.get('/sim-stats'),
-  getAnalysis: () => api.get('/sim-analysis')
+  getAnalysis: () => api.get('/sim-analysis'),
+  getList: () => api.get('/watchlist')
 }
 
 export const watchlist = {
