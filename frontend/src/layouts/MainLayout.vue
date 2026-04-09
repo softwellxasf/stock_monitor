@@ -14,6 +14,7 @@
           :collapse-transition="false"
           router
           class="sidebar-menu"
+          background-color="transparent"
         >
           <!-- 模拟分类 -->
           <el-sub-menu index="sim">
@@ -167,33 +168,64 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: rgba(255,255,255,0.9);
   font-size: 16px;
   font-weight: 500;
-  background: rgba(0,0,0,0.1);
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.08);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
-.sidebar-menu { border-right: none; background: transparent; }
-.sidebar-menu:not(.el-menu--collapse) { width: 220px; }
+/* 侧边栏菜单统一样式 */
+.sidebar-menu {
+  border-right: none;
+  background: transparent;
+}
 
+.sidebar-menu:not(.el-menu--collapse) {
+  width: 220px;
+}
+
+/* 一级菜单（子菜单标题）和二级菜单统一颜色 */
 .sidebar-menu .el-menu-item,
 .sidebar-menu .el-sub-menu__title {
-  color: #c5d5e8;
+  color: rgba(255, 255, 255, 0.85);
   font-size: 14px;
+  background: transparent;
 }
 
+/* 悬停效果 - 一级和二级统一 */
 .sidebar-menu .el-menu-item:hover,
 .sidebar-menu .el-sub-menu__title:hover {
-  background: var(--theme-sidebar-hover, #3d5a7b);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 1);
 }
 
+/* 选中状态 - 使用主题色 */
 .sidebar-menu .el-menu-item.is-active {
   background: var(--theme-sidebar-active, #3d6bb3);
-  color: #fff;
+  color: rgba(255, 255, 255, 1);
 }
 
+/* 子菜单展开背景 - 轻微加深 */
+.sidebar-menu .el-menu--inline {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.sidebar-menu .el-menu--inline .el-menu-item {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.sidebar-menu .el-menu--inline .el-menu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 1);
+}
+
+.sidebar-menu .el-menu--inline .el-menu-item.is-active {
+  background: var(--theme-sidebar-active, #3d6bb3);
+  color: rgba(255, 255, 255, 1);
+}
+
+/* 收缩按钮 */
 .collapse-btn {
   position: absolute;
   bottom: 20px;
@@ -201,18 +233,21 @@ onMounted(() => {
   transform: translateX(-50%);
   width: 40px;
   height: 40px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.12);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: rgba(255,255,255,0.9);
   cursor: pointer;
   transition: background 0.3s;
 }
 
-.collapse-btn:hover { background: var(--theme-primary, #2B5B9E); }
+.collapse-btn:hover {
+  background: var(--theme-primary, #2B5B9E);
+}
 
+/* 顶部导航 */
 .header {
   background: var(--theme-bg, #F7F8FA);
   border-bottom: 1px solid var(--theme-border, #E5E6EB);
