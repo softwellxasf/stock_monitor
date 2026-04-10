@@ -270,10 +270,16 @@
           <div class="calendar-grid" v-if="monthlySummary.length > 0">
             <div v-for="month in monthlySummary" :key="month.month" class="calendar-month">
               <div class="calendar-month-title">{{ month.month }}</div>
-              <div class="calendar-weekdays">
-                <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
-              </div>
-              <div class="calendar-days">
+              <div class="calendar-grid-days">
+                <!-- 星期标题 -->
+                <div class="calendar-weekday">日</div>
+                <div class="calendar-weekday">一</div>
+                <div class="calendar-weekday">二</div>
+                <div class="calendar-weekday">三</div>
+                <div class="calendar-weekday">四</div>
+                <div class="calendar-weekday">五</div>
+                <div class="calendar-weekday">六</div>
+                <!-- 日期格子 -->
                 <div
                   v-for="day in getCalendarDays(month.month)"
                   :key="day.date || day.day"
