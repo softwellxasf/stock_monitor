@@ -1021,25 +1021,22 @@ onMounted(async () => {
   border-bottom: 1px solid #f0f0f0;
 }
 
-.calendar-weekdays {
+.calendar-grid-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 3px;
-  margin-bottom: 6px;
 }
 
-.calendar-weekdays span {
+.calendar-weekday {
+  /* 星期标题样式 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  font-size: 11px;
+  font-size: 12px;
   color: #909399;
-  padding: 6px 0;
   font-weight: 500;
-}
-
-.calendar-days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
+  height: 24px;
 }
 
 .calendar-day {
@@ -1094,5 +1091,42 @@ onMounted(async () => {
 
 .calendar-day:not(.gain-5):not(.gain-3):not(.loss-3):not(.loss-5):hover {
   border-color: #409EFF;
+}
+</style>
+
+<style scoped>
+/* 日历网格 - 单一容器确保对齐 */
+.calendar-grid-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.calendar-weekday {
+  /* 星期标题样式 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 12px;
+  color: #909399;
+  font-weight: 500;
+  height: 24px;
+}
+
+.calendar-day {
+  /* 日期格子样式 */
+  width: 100%;
+  height: 60px;
+  border-radius: 6px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  border: 1px solid transparent;
+  transition: transform 0.2s;
+  box-sizing: border-box;
 }
 </style>
