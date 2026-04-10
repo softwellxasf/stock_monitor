@@ -1014,6 +1014,7 @@ onMounted(async () => {
   grid-template-columns: repeat(7, 1fr);
   gap: 3px;
   margin-bottom: 6px;
+  padding: 0 2px;  /* 与 calendar-days 对齐 */
 }
 
 .calendar-weekdays span {
@@ -1028,6 +1029,7 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 3px;
+  padding: 0 2px;  /* 与 calendar-weekdays 对齐 */
 }
 
 .calendar-day {
@@ -1046,6 +1048,7 @@ onMounted(async () => {
 
 .calendar-day.empty {
   visibility: hidden;
+  pointer-events: none;  /* 禁止交互 */
 }
 
 .calendar-day:hover {
