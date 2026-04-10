@@ -106,10 +106,17 @@
             <!-- 表格视图 -->
             <el-table v-if="dailyViewMode === 'table'" :data="dailyReturns" stripe style="width: 100%" :max-height="350">
               <el-table-column prop="date" label="日期" width="100" />
+              <el-table-column label="日收益率" align="right">
+                <template #default="{ row }">
+                  <el-tag :type="row.daily_return >= 0 ? 'danger' : 'success'" size="small">
+                    {{ row.daily_return >= 0 ? '+' : '' }}{{ (row.daily_return * 100).toFixed(2) }}%
+                  </el-tag>
+                </template>
+              </el-table-column>
               <el-table-column label="上证指数收益率" align="right">
                 <template #default="{ row }">
                   <el-tag :type="row.sh_index_return >= 0 ? 'danger' : 'success'" size="small">
-                    {{ row.sh_index_return >= 0 ? '+' : '' }}{{ row.sh_index_return.toFixed(2) }}%
+                    {{ row.sh_index_return >= 0 ? '+' : '' }}{{ (row.sh_index_return * 100).toFixed(2) }}%
                   </el-tag>
                 </template>
               </el-table-column>
@@ -153,10 +160,17 @@
                   </el-tag>
                 </template>
               </el-table-column>
+              <el-table-column label="日收益率" align="right">
+                <template #default="{ row }">
+                  <el-tag :type="row.daily_return >= 0 ? 'danger' : 'success'" size="small">
+                    {{ row.daily_return >= 0 ? '+' : '' }}{{ (row.daily_return * 100).toFixed(2) }}%
+                  </el-tag>
+                </template>
+              </el-table-column>
               <el-table-column label="上证指数收益率" align="right">
                 <template #default="{ row }">
                   <el-tag :type="row.sh_index_return >= 0 ? 'danger' : 'success'" size="small">
-                    {{ row.sh_index_return >= 0 ? '+' : '' }}{{ row.sh_index_return.toFixed(2) }}%
+                    {{ row.sh_index_return >= 0 ? '+' : '' }}{{ (row.sh_index_return * 100).toFixed(2) }}%
                   </el-tag>
                 </template>
               </el-table-column>
@@ -189,10 +203,17 @@
                   </el-tag>
                 </template>
               </el-table-column>
+              <el-table-column label="日收益率" align="right">
+                <template #default="{ row }">
+                  <el-tag :type="row.daily_return >= 0 ? 'danger' : 'success'" size="small">
+                    {{ row.daily_return >= 0 ? '+' : '' }}{{ (row.daily_return * 100).toFixed(2) }}%
+                  </el-tag>
+                </template>
+              </el-table-column>
               <el-table-column label="上证指数收益率" align="right">
                 <template #default="{ row }">
                   <el-tag :type="row.sh_index_return >= 0 ? 'danger' : 'success'" size="small">
-                    {{ row.sh_index_return >= 0 ? '+' : '' }}{{ row.sh_index_return.toFixed(2) }}%
+                    {{ row.sh_index_return >= 0 ? '+' : '' }}{{ (row.sh_index_return * 100).toFixed(2) }}%
                   </el-tag>
                 </template>
               </el-table-column>
@@ -219,10 +240,17 @@
                   </el-tag>
                 </template>
               </el-table-column>
+              <el-table-column label="日收益率" align="right">
+                <template #default="{ row }">
+                  <el-tag :type="row.daily_return >= 0 ? 'danger' : 'success'" size="small">
+                    {{ row.daily_return >= 0 ? '+' : '' }}{{ (row.daily_return * 100).toFixed(2) }}%
+                  </el-tag>
+                </template>
+              </el-table-column>
               <el-table-column label="上证指数收益率" align="right">
                 <template #default="{ row }">
                   <el-tag :type="row.sh_index_return >= 0 ? 'danger' : 'success'" size="small">
-                    {{ row.sh_index_return >= 0 ? '+' : '' }}{{ row.sh_index_return.toFixed(2) }}%
+                    {{ row.sh_index_return >= 0 ? '+' : '' }}{{ (row.sh_index_return * 100).toFixed(2) }}%
                   </el-tag>
                 </template>
               </el-table-column>
@@ -441,9 +469,9 @@ const initDailyChart = () => {
 
   const data = dailyReturns.value.slice().reverse()
   const dates = data.map(d => d.date.slice(5))
-  const dailyReturnsData = data.map(d => d.daily_return)
-  const totalReturns = data.map(d => d.total_return)
-  const shIndexReturns = data.map(d => d.sh_index_return || 0)
+  const dailyReturnsData = data.map(d => d.daily_return * 100)  // 转换为百分比
+  const totalReturns = data.map(d => d.total_return * 100)  // 转换为百分比
+  const shIndexReturns = data.map(d => (d.sh_index_return || 0) * 100)  // 转换为百分比
 
   const option = {
     tooltip: {
@@ -546,7 +574,7 @@ const initWeeklyChart = () => {
   const data = weeklyReturns.value.slice().reverse()
   const weeks = data.map(d => d.week)
   const weeklyReturnsData = data.map(d => d.weekly_return)
-  const shIndexReturns = data.map(d => d.sh_index_return || 0)
+  const shIndexReturns = data.map(d => (d.sh_index_return || 0) * 100)  // 转换为百分比
 
   const option = {
     tooltip: {
@@ -639,7 +667,7 @@ const initMonthlyChart = () => {
   const data = monthlyReturns.value.slice().reverse()
   const months = data.map(d => d.month.slice(5))
   const monthlyReturnsData = data.map(d => d.monthly_return)
-  const shIndexReturns = data.map(d => d.sh_index_return || 0)
+  const shIndexReturns = data.map(d => (d.sh_index_return || 0) * 100)  // 转换为百分比
 
   const option = {
     tooltip: {
