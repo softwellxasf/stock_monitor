@@ -8,6 +8,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import text
 from datetime import datetime, timedelta
 import os
 
@@ -770,6 +771,22 @@ def get_stats():
 @jwt_required()
 def get_sim_stats():
     """获取模拟盘统计数据"""
+    # 自动同步 sim_account 数据（从 sim_daily_snapshots 最新记录）
+    try:
+        latest_snapshot = db.session.execute(text("""
+            SELECT total_asset, cash, position_value FROM sim_daily_snapshots
+            ORDER BY snapshot_date DESC LIMIT 1
+        """)).fetchone()
+        if latest_snapshot:
+            total_asset, cash, position_value = latest_snapshot
+            account = SimAccount.query.filter_by(id=1).first()
+            if account:
+                account.cash = float(cash)
+                account.total_value = float(total_asset)
+                db.session.commit()
+    except Exception as e:
+        pass  # 同步失败不影响主逻辑
+    
     # 持仓数量
     position_count = SimPosition.query.filter(SimPosition.quantity > 0).count()
 
@@ -1096,11 +1113,6 @@ def get_sim_analysis():
             'positive_days': positive_days,
             'negative_days': negative_days,
             'win_rate': round(positive_days / len(returns) * 100, 2) if returns else 0,
-            'max_daily': round(max_daily, 4),
-            'min_daily': round(min_daily, 4)
-        })
-            'negative_days': negative_days,
-            'win_rate': round(positive_days / len(data) * 100, 2) if data else 0,
             'max_daily': round(max_daily, 4),
             'min_daily': round(min_daily, 4)
         })
