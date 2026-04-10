@@ -106,13 +106,6 @@
             <!-- 表格视图 -->
             <el-table v-if="dailyViewMode === 'table'" :data="dailyReturns" stripe style="width: 100%" :max-height="350">
               <el-table-column prop="date" label="日期" width="100" />
-              <el-table-column label="组合日收益率" align="right">
-                <template #default="{ row }">
-                  <el-tag :type="row.daily_return >= 0 ? 'danger' : 'success'" size="small">
-                    {{ row.daily_return >= 0 ? '+' : '' }}{{ row.daily_return.toFixed(4) }}%
-                  </el-tag>
-                </template>
-              </el-table-column>
               <el-table-column label="上证指数收益率" align="right">
                 <template #default="{ row }">
                   <el-tag :type="row.sh_index_return >= 0 ? 'danger' : 'success'" size="small">
@@ -432,6 +425,7 @@ const initDailyChart = () => {
   const dates = data.map(d => d.date.slice(5)) // 只显示 MM-DD
   const dailyReturnsData = data.map(d => d.daily_return)
   const totalReturns = data.map(d => d.total_return)
+  const shIndexReturns = data.map(d => d.sh_index_return || 0)
 
   const option = {
     tooltip: {
@@ -441,18 +435,18 @@ const initDailyChart = () => {
         const date = params[0].name
         let html = `<div style="padding: 8px; font-weight: bold;">${date}</div>`
         params.forEach(p => {
-          const color = p.value >= 0 ? '#f56c6c' : '#67c23a'
+          const color = p.seriesName === '上证指数' ? '#409EFF' : (p.value >= 0 ? '#f56c6c' : '#67c23a')
           const sign = p.value >= 0 ? '+' : ''
           html += `<div style="padding: 4px 8px;">
             <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};margin-right:8px;"></span>
-            <span style="color:${color};font-weight:bold;">${p.seriesName}: ${sign}${p.value.toFixed(4)}%</span>
+            <span style="color:${color};font-weight:bold;">${p.seriesName}: ${sign}${p.value.toFixed(2)}%</span>
           </div>`
         })
         return html
       }
     },
     legend: {
-      data: ['日收益率', '累计收益'],
+      data: ['日收益率', '累计收益', '上证指数'],
       bottom: 10
     },
     grid: {
@@ -503,6 +497,15 @@ const initDailyChart = () => {
         symbolSize: 6,
         itemStyle: { color: '#409EFF' },
         lineStyle: { width: 2 }
+      },
+      {
+        name: '上证指数',
+        type: 'line',
+        data: shIndexReturns,
+        smooth: true,
+        symbol: 'none',
+        itemStyle: { color: '#67c23a' },
+        lineStyle: { width: 2, type: 'dashed' }
       }
     ]
   }
