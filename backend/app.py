@@ -609,13 +609,14 @@ def get_actual_analysis():
     from collections import defaultdict
     from datetime import datetime, timedelta
 
-    weekly_data = defaultdict(lambda: {'returns': [], 'dates': []})
+    weekly_data = defaultdict(lambda: {'returns': [], 'sh_returns': [], 'dates': []})
     for s in snapshots:
         if s.snapshot_date:
             # ISO calendar: (year, week, weekday)
             iso_cal = s.snapshot_date.isocalendar()
             week_key = f"{iso_cal[0]}-W{iso_cal[1]:02d}"
             weekly_data[week_key]['returns'].append(float(s.daily_return) if s.daily_return else 0)
+            weekly_data[week_key]['sh_returns'].append(float(s.sh_index_return) if s.sh_index_return else 0)
             weekly_data[week_key]['dates'].append(s.snapshot_date)
 
     weekly_returns = []
@@ -633,10 +634,18 @@ def get_actual_analysis():
         for r in data['returns']:
             compounded *= (1 + r / 100)
         weekly_ret = (compounded - 1) * 100
+
+        # 上证指数周收益率
+        sh_compounded = 1.0
+        for r in data['sh_returns']:
+            sh_compounded *= (1 + r / 100)
+        sh_weekly_ret = (sh_compounded - 1) * 100
+
         weekly_returns.append({
             'week': f"{monday.strftime('%m-%d')} ~ {sunday.strftime('%m-%d')}",
             'week_start': monday,
             'weekly_return': round(weekly_ret, 4),
+            'sh_index_return': round(sh_weekly_ret, 4),
             'trading_days': len(data['returns'])
         })
 
@@ -648,24 +657,33 @@ def get_actual_analysis():
         del w['week_start']
 
     # 月收益率统计（最近 15 个月，倒序）
-    monthly_data = defaultdict(list)
+    monthly_data = defaultdict(lambda: {'returns': [], 'sh_returns': []})
     for s in snapshots:
         if s.snapshot_date:
             month_key = s.snapshot_date.strftime('%Y-%m')
-            monthly_data[month_key].append(float(s.daily_return) if s.daily_return else 0)
+            monthly_data[month_key]['returns'].append(float(s.daily_return) if s.daily_return else 0)
+            monthly_data[month_key]['sh_returns'].append(float(s.sh_index_return) if s.sh_index_return else 0)
 
     monthly_returns = []
-    for month, daily_rets in sorted(monthly_data.items(), key=lambda x: x[0], reverse=True)[:15]:
+    for month, data in sorted(monthly_data.items(), key=lambda x: x[0], reverse=True)[:15]:
         compounded = 1.0
-        for r in daily_rets:
+        for r in data['returns']:
             compounded *= (1 + r / 100)
         monthly_ret = (compounded - 1) * 100
+
+        # 上证指数月收益率
+        sh_compounded = 1.0
+        for r in data['sh_returns']:
+            sh_compounded *= (1 + r / 100)
+        sh_monthly_ret = (sh_compounded - 1) * 100
+
         monthly_returns.append({
             'month': month,
             'monthly_return': round(monthly_ret, 4),
-            'trading_days': len(daily_rets),
-            'positive_days': sum(1 for r in daily_rets if r > 0),
-            'negative_days': sum(1 for r in daily_rets if r < 0)
+            'sh_index_return': round(sh_monthly_ret, 4),
+            'trading_days': len(data['returns']),
+            'positive_days': sum(1 for r in data['returns'] if r > 0),
+            'negative_days': sum(1 for r in data['returns'] if r < 0)
         })
     # 按月份倒序（最新的在前）
     monthly_returns.sort(key=lambda x: x['month'], reverse=True)
@@ -684,21 +702,29 @@ def get_actual_analysis():
     monthly_summary = []
     for month, data in sorted(monthly_data.items(), key=lambda x: x[0], reverse=True)[:6]:
         compounded = 1.0
-        for r in data:
+        for r in data['returns']:
             compounded *= (1 + r / 100)
         monthly_ret = (compounded - 1) * 100
-        positive_days = sum(1 for r in data if r > 0)
-        negative_days = sum(1 for r in data if r < 0)
-        max_daily = max(data) if data else 0
-        min_daily = min(data) if data else 0
+
+        # 上证指数月收益率
+        sh_compounded = 1.0
+        for r in data['sh_returns']:
+            sh_compounded *= (1 + r / 100)
+        sh_monthly_ret = (sh_compounded - 1) * 100
+
+        positive_days = sum(1 for r in data['returns'] if r > 0)
+        negative_days = sum(1 for r in data['returns'] if r < 0)
+        max_daily = max(data['returns']) if data['returns'] else 0
+        min_daily = min(data['returns']) if data['returns'] else 0
 
         monthly_summary.append({
             'month': month,
             'return': round(monthly_ret, 4),
-            'trading_days': len(data),
+            'sh_index_return': round(sh_monthly_ret, 4),
+            'trading_days': len(data['returns']),
             'positive_days': positive_days,
             'negative_days': negative_days,
-            'win_rate': round(positive_days / len(data) * 100, 2) if data else 0,
+            'win_rate': round(positive_days / len(data['returns']) * 100, 2) if data['returns'] else 0,
             'max_daily': round(max_daily, 4),
             'min_daily': round(min_daily, 4)
         })
