@@ -485,7 +485,7 @@ const initDailyChart = () => {
           const sign = p.value >= 0 ? '+' : ''
           html += `<div style="padding: 4px 8px;">
             <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};margin-right:8px;"></span>
-            <span style="color:${color};font-weight:bold;">${p.seriesName}: ${sign}${p.value.toFixed(4)}%</span>
+            <span style="color:${color};font-weight:bold;">${p.seriesName}: ${sign}${p.value.toFixed(2)}%</span>
           </div>`
         })
         return html
