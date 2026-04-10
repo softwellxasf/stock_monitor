@@ -1040,33 +1040,36 @@ onMounted(async () => {
 }
 
 .calendar-day {
-  aspect-ratio: 1;
-  min-height: 50px;
+  /* 日期格子样式 */
+  width: 100%;
+  height: 60px;
   border-radius: 6px;
-  padding: 2px;
+  padding: 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: 11px;
+  justify-content: space-between;
+  font-size: 12px;
   border: 1px solid transparent;
   transition: transform 0.2s;
+  box-sizing: border-box;
 }
 
 .calendar-day.empty {
   visibility: hidden;
+  pointer-events: none;
 }
 
 .calendar-day:hover {
   transform: scale(1.05);
 }
 
-.calendar-day.gain-5 { background: #dc3545; border-color: #dc3545; }
-.calendar-day.gain-3 { background: #f46a6a; border-color: #f46a6a; }
-.calendar-day.gain-1 { background: #ff9b9b; border-color: #ff9b9b; }
-.calendar-day.loss-1 { background: #9acd32; border-color: #9acd32; }
-.calendar-day.loss-3 { background: #7cba32; border-color: #7cba32; }
-.calendar-day.loss-5 { background: #5faa32; border-color: #5faa32; }
+.calendar-day.gain-5 { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border-color: #dc3545; box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4); }
+.calendar-day.gain-3 { background: linear-gradient(135deg, #f46a6a 0%, #e55a5a 100%); border-color: #f46a6a; box-shadow: 0 2px 6px rgba(244, 106, 106, 0.3); }
+.calendar-day.gain-1 { background: linear-gradient(135deg, #ff9b9b 0%, #ff8b8b 100%); border-color: #ff9b9b; }
+.calendar-day.loss-1 { background: linear-gradient(135deg, #9acd32 0%, #8ac222 100%); border-color: #9acd32; }
+.calendar-day.loss-3 { background: linear-gradient(135deg, #7cba32 0%, #6eae24 100%); border-color: #7cba32; box-shadow: 0 2px 6px rgba(124, 186, 50, 0.3); }
+.calendar-day.loss-5 { background: linear-gradient(135deg, #5faa32 0%, #519a24 100%); border-color: #5faa32; box-shadow: 0 2px 6px rgba(95, 170, 50, 0.4); }
 
 .day-num {
   font-weight: bold;
@@ -1091,42 +1094,5 @@ onMounted(async () => {
 
 .calendar-day:not(.gain-5):not(.gain-3):not(.loss-3):not(.loss-5):hover {
   border-color: #409EFF;
-}
-</style>
-
-<style scoped>
-/* 日历网格 - 单一容器确保对齐 */
-.calendar-grid-days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
-}
-
-.calendar-weekday {
-  /* 星期标题样式 */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-size: 12px;
-  color: #909399;
-  font-weight: 500;
-  height: 24px;
-}
-
-.calendar-day {
-  /* 日期格子样式 */
-  width: 100%;
-  height: 60px;
-  border-radius: 6px;
-  padding: 4px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 12px;
-  border: 1px solid transparent;
-  transition: transform 0.2s;
-  box-sizing: border-box;
 }
 </style>
