@@ -1017,14 +1017,15 @@ onMounted(async () => {
 }
 
 .calendar-weekdays span {
+  /* 让 span 完全作为 grid item，与 calendar-day 一致 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   font-size: 12px;
   color: #909399;
   font-weight: 500;
-  /* 确保 span 作为 grid item 与 calendar-day 宽度一致 */
-  display: block;
-  width: 100%;
-  line-height: 20px;
+  height: 24px;  /* 固定高度 */
 }
 
 .calendar-days {
@@ -1034,8 +1035,9 @@ onMounted(async () => {
 }
 
 .calendar-day {
-  aspect-ratio: 1;
-  min-height: 60px;
+  /* 固定尺寸，确保与 weekday 对齐 */
+  width: 100%;
+  height: 60px;
   border-radius: 6px;
   padding: 4px;
   display: flex;
@@ -1046,8 +1048,6 @@ onMounted(async () => {
   border: 1px solid transparent;
   transition: transform 0.2s;
   box-sizing: border-box;
-  width: 100%;  /* 确保占满 grid 单元格 */
-  height: 100%;  /* 确保占满 grid 单元格 */
 }
 
 .calendar-day.empty {
