@@ -366,13 +366,13 @@ const getCalendarDays = (monthStr) => {
 
 // 根据收益率返回 CSS 类
 const getReturnClass = (ret) => {
-  if (ret === 0) return ''
-  if (ret >= 5) return 'gain-5'
-  if (ret >= 3) return 'gain-3'
-  if (ret >= 1) return 'gain-1'
-  if (ret >= -1) return 'loss-1'
-  if (ret >= -3) return 'loss-3'
-  return 'loss-5'
+  if (ret === 0 || ret === undefined) return ''  // 无数据或 0%
+  if (ret >= 5) return 'gain-5'   // ≥+5% 深红
+  if (ret >= 3) return 'gain-3'   // +3%~+5% 中红
+  if (ret > 0) return 'gain-1'    // +0.01%~+3% 浅红
+  if (ret >= -1) return 'loss-1'  // -1%~0% 浅绿
+  if (ret >= -3) return 'loss-3'  // -3%~-1% 中绿
+  return 'loss-5'                 // ≤-3% 深绿
 }
 
 const loadStats = async () => {
