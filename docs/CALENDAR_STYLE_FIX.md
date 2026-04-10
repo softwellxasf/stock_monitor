@@ -115,3 +115,27 @@ return: dayData ? (dayData.return * 100) : 0  // 转换为百分比
 
 _文档创建：2026-04-11_  
 _维护：学霸 AI 📊_
+
+---
+
+## ⚠️ 重要说明：实盘 vs 模拟盘数据格式
+
+**实盘和模拟盘的后端数据格式不同！**
+
+| 表名 | 字段 | 格式 | 示例 | 前端处理 |
+|------|------|------|------|----------|
+| `daily_snapshots` (实盘) | `daily_return` | **百分比** | `1.8969` = 1.8969% | 直接使用 |
+| `sim_daily_snapshots` (模拟盘) | `daily_return` | **小数** | `0.0123` = 1.23% | 乘以 100 |
+
+**原因：** 两个表由不同系统写入，格式约定不一致。
+
+**前端代码差异：**
+
+```javascript
+// RealAnalysis.vue (实盘) - 直接使用
+return: dayData ? dayData.return : 0
+
+// SimAnalysis.vue (模拟盘) - 转换为百分比
+return: dayData ? (dayData.return * 100) : 0
+```
+
