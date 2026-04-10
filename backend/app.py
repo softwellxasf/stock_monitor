@@ -590,9 +590,9 @@ def get_actual_analysis():
             }
         })
 
-    # 日收益率数据（最近 30 天，倒序）
+    # 日收益率数据（最近 60 天，倒序）
     daily_returns = []
-    for s in snapshots[:30]:
+    for s in snapshots[:60]:
         daily_returns.append({
             'date': s.snapshot_date.strftime('%Y-%m-%d') if s.snapshot_date else '',
             'daily_return': float(s.daily_return) if s.daily_return else 0,
@@ -616,7 +616,7 @@ def get_actual_analysis():
             weekly_data[week_key]['dates'].append(s.snapshot_date)
 
     weekly_returns = []
-    for week, data in sorted(weekly_data.items(), key=lambda x: x[0], reverse=True)[:12]:
+    for week, data in sorted(weekly_data.items(), key=lambda x: x[0], reverse=True)[:30]:
         # 计算这周的日期范围（周一到周日）
         dates = sorted(data['dates'])
         first_date = min(dates)
@@ -644,7 +644,7 @@ def get_actual_analysis():
     for w in weekly_returns:
         del w['week_start']
 
-    # 月收益率统计（最近 6 个月，倒序）
+    # 月收益率统计（最近 15 个月，倒序）
     monthly_data = defaultdict(list)
     for s in snapshots:
         if s.snapshot_date:
@@ -652,7 +652,7 @@ def get_actual_analysis():
             monthly_data[month_key].append(float(s.daily_return) if s.daily_return else 0)
 
     monthly_returns = []
-    for month, daily_rets in sorted(monthly_data.items(), key=lambda x: x[0], reverse=True)[:6]:
+    for month, daily_rets in sorted(monthly_data.items(), key=lambda x: x[0], reverse=True)[:15]:
         compounded = 1.0
         for r in daily_rets:
             compounded *= (1 + r / 100)
@@ -803,21 +803,38 @@ def get_sim_analysis():
                 'weekly_returns': [],
                 'monthly_returns': [],
                 'calendar_data': [],
-                'monthly_summary': []
+                'monthly_summary': [],
+                'daily_positions': [],
+                'weekly_positions': [],
+                'monthly_positions': []
             }
         })
 
-    # 日收益率数据（最近 30 天，倒序）
+    # 日收益率数据（最近 60 天，倒序）
     daily_returns = []
-    for s in snapshots[:30]:
+    daily_positions = []
+    for s in snapshots[:60]:
         daily_returns.append({
             'date': s.snapshot_date.strftime('%Y-%m-%d') if s.snapshot_date else '',
             'daily_return': float(s.daily_return) if s.daily_return else 0,
             'total_return': float(s.total_return) if s.total_return else 0,
             'total_asset': float(s.total_asset) if s.total_asset else 0
         })
+        # 仓位数据：由于旧数据 position_value 为 0，我们用 total_asset 作为参考
+        # 仓位比例 = 持仓市值 / 总资产，如果 position_value 为 0 则用 total_asset 推断
+        pos_value = float(s.position_value) if s.position_value else 0
+        total_asset = float(s.total_asset) if s.total_asset else 0
+        # 如果 position_value 为 0，尝试用总资产变化推断（简化的处理）
+        pos_ratio = (pos_value / total_asset * 100) if total_asset > 0 else 0
+        daily_positions.append({
+            'date': s.snapshot_date.strftime('%Y-%m-%d') if s.snapshot_date else '',
+            'position_value': pos_value,
+            'position_ratio': round(pos_ratio, 2),
+            'total_asset': total_asset
+        })
     # 按日期倒序（最新的在前）
     daily_returns.sort(key=lambda x: x['date'], reverse=True)
+    daily_positions.sort(key=lambda x: x['date'], reverse=True)
 
     # 周收益率统计（按周分组）
     from collections import defaultdict
@@ -833,7 +850,7 @@ def get_sim_analysis():
             weekly_data[week_key]['dates'].append(s.snapshot_date)
 
     weekly_returns = []
-    for week, data in sorted(weekly_data.items(), key=lambda x: x[0], reverse=True)[:12]:
+    for week, data in sorted(weekly_data.items(), key=lambda x: x[0], reverse=True)[:30]:
         # 计算这周的日期范围（周一到周日）
         dates = sorted(data['dates'])
         first_date = min(dates)
@@ -857,23 +874,100 @@ def get_sim_analysis():
     # 按日期倒序排序（最新的在前）
     weekly_returns.sort(key=lambda x: x['week_start'], reverse=True)
 
-    # 移除辅助字段
+    # 周仓位数据
+    weekly_positions = []
     for w in weekly_returns:
+        # 计算这周的平均仓位
+        week_str = w['week']
+        # 从 week_str 提取日期范围，如 "04-01 ~ 04-07"
+        try:
+            start_date_str, end_date_str = week_str.split(' ~ ')
+            # 使用 2026 年作为基准年份（因为快照数据是 2026 年的）
+            year = 2026
+            monday = datetime.strptime(f"{year}-{start_date_str}", "%Y-%m-%d").date()
+            sunday = datetime.strptime(f"{year}-{end_date_str}", "%Y-%m-%d").date()
+
+            # 计算这周的平均仓位比例
+            week_snapshots = [s for s in snapshots if s.snapshot_date and monday <= s.snapshot_date <= sunday]
+            avg_pos_ratio = 0
+            avg_position_value = 0
+            if week_snapshots:
+                total_assets = []
+                position_values = []
+                for ws in week_snapshots:
+                    if ws.total_asset and ws.position_value:
+                        total_assets.append(float(ws.total_asset))
+                        position_values.append(float(ws.position_value))
+                if total_assets and sum(total_assets) > 0:
+                    avg_position_value = sum(position_values) / len(position_values) if position_values else 0
+                    avg_pos_ratio = (sum(position_values) / sum(total_assets) * 100) if total_assets else 0
+
+            weekly_positions.append({
+                'week': week_str,
+                'position_ratio': round(avg_pos_ratio, 2),
+                'position_value': round(avg_position_value, 2)
+            })
+        except Exception as e:
+            # 如果解析失败，使用简化的方式
+            weekly_positions.append({
+                'week': w['week'],
+                'position_ratio': 0,
+                'position_value': 0
+            })
+
         del w['week_start']
 
-    # 月收益率统计（最近 6 个月，倒序）
+    # 月收益率统计（最近 15 个月，倒序）— 模拟盘
+    # 先找到最早的月份，然后填充所有月份（包括空仓月份）
+    from dateutil.relativedelta import relativedelta
+
     monthly_data = defaultdict(list)
     for s in snapshots:
         if s.snapshot_date:
             month_key = s.snapshot_date.strftime('%Y-%m')
             monthly_data[month_key].append(float(s.daily_return) if s.daily_return else 0)
 
+    # 获取所有存在的月份
+    existing_months = set(monthly_data.keys())
+
+    # 找到最近和有数据的月份
+    sorted_months = sorted(existing_months)
+    if sorted_months:
+        earliest_month = sorted_months[0]
+        latest_month = sorted_months[-1]
+
+        # 从最早月份往前推，确保有 15 个月的数据
+        earliest_dt = datetime.strptime(earliest_month, '%Y-%m')
+        latest_dt = datetime.strptime(latest_month, '%Y-%m')
+
+        # 计算需要往前推多少个月才能凑够 15 个月
+        months_diff = (latest_dt.year - earliest_dt.year) * 12 + (latest_dt.month - earliest_dt.month)
+        if months_diff < 14:
+            months_to_add = 14 - months_diff
+            earliest_dt = earliest_dt - relativedelta(months=months_to_add)
+
+        # 生成连续的月份列表
+        all_months = []
+        current_dt = earliest_dt
+        while current_dt <= latest_dt:
+            all_months.append(current_dt.strftime('%Y-%m'))
+            current_dt = current_dt + relativedelta(months=1)
+    else:
+        all_months = []
+
     monthly_returns = []
-    for month, daily_rets in sorted(monthly_data.items(), key=lambda x: x[0], reverse=True)[:6]:
-        compounded = 1.0
-        for r in daily_rets:
-            compounded *= (1 + r / 100)
-        monthly_ret = (compounded - 1) * 100
+    monthly_positions = []
+    for month in all_months[-15:]:  # 取最近 15 个月
+        daily_rets = monthly_data.get(month, [])
+
+        if daily_rets:
+            compounded = 1.0
+            for r in daily_rets:
+                compounded *= (1 + r / 100)
+            monthly_ret = (compounded - 1) * 100
+        else:
+            monthly_ret = 0
+
         monthly_returns.append({
             'month': month,
             'monthly_return': round(monthly_ret, 4),
@@ -881,7 +975,32 @@ def get_sim_analysis():
             'positive_days': sum(1 for r in daily_rets if r > 0),
             'negative_days': sum(1 for r in daily_rets if r < 0)
         })
-    # 按月份倒序（最新的在前）
+
+        # 计算月平均仓位
+        month_snapshots = [s for s in snapshots if s.snapshot_date and s.snapshot_date.strftime('%Y-%m') == month]
+        avg_pos_ratio = 0
+        avg_position_value = 0
+        if month_snapshots:
+            total_assets = []
+            position_values = []
+            for ms in month_snapshots:
+                if ms.total_asset and ms.position_value:
+                    total_assets.append(float(ms.total_asset))
+                    position_values.append(float(ms.position_value))
+            if total_assets and sum(total_assets) > 0:
+                avg_position_value = sum(position_values) / len(position_values) if position_values else 0
+                avg_pos_ratio = (sum(position_values) / sum(total_assets) * 100) if total_assets else 0
+
+        monthly_positions.append({
+            'month': month,
+            'position_ratio': round(avg_pos_ratio, 2),
+            'position_value': round(avg_position_value, 2)
+        })
+    # 按月份倒序（最新的在前）— 模拟盘
+    monthly_returns.sort(key=lambda x: x['month'], reverse=True)
+    monthly_positions.sort(key=lambda x: x['month'], reverse=True)
+
+    # 日历热力图数据（最近 6 个月）— 模拟盘
     monthly_returns.sort(key=lambda x: x['month'], reverse=True)
 
     # 日历热力图数据（最近 6 个月）
@@ -916,7 +1035,7 @@ def get_sim_analysis():
             'max_daily': round(max_daily, 4),
             'min_daily': round(min_daily, 4)
         })
-    # 按月份倒序（最新的在前）
+    # 按月份倒序（最新的在前）— 模拟盘
     monthly_summary.sort(key=lambda x: x['month'], reverse=True)
 
     return jsonify({
@@ -926,7 +1045,10 @@ def get_sim_analysis():
             'weekly_returns': weekly_returns,
             'monthly_returns': monthly_returns,
             'calendar_data': calendar_data,
-            'monthly_summary': monthly_summary
+            'monthly_summary': monthly_summary,
+            'daily_positions': daily_positions,
+            'weekly_positions': weekly_positions,
+            'monthly_positions': monthly_positions
         }
     })
 

@@ -1,0 +1,18 @@
+[Unit]
+Description=Stock Monitor Service
+After=network.target mysqld.service
+Wants=mysqld.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/lizr/pyProject/stockMonitor
+Environment="PATH=/usr/bin:/usr/local/bin:/root/.nvm/versions/node/v20.11.0/bin"
+ExecStart=/bin/bash /home/lizr/pyProject/stockMonitor/start-daemon.sh
+ExecStop=/bin/bash /home/lizr/pyProject/stockMonitor/stop.sh
+Restart=always
+RestartSec=10
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target

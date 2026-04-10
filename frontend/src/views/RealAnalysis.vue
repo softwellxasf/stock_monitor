@@ -20,12 +20,12 @@
         <el-card shadow="hover" class="stat-card">
           <template #header>
             <div class="card-header">
-              <span>持仓市值</span>
+              <span>持仓成本</span>
               <el-icon class="icon-blue"><Money /></el-icon>
             </div>
           </template>
-          <div class="stat-value">¥{{ stats.total_market_value?.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</div>
-          <div class="stat-sub">成本：¥{{ stats.total_cost?.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</div>
+          <div class="stat-value">¥{{ stats.total_cost?.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</div>
+          <div class="stat-sub">市值：¥{{ stats.total_market_value?.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</div>
         </el-card>
       </el-col>
       <el-col :span="8">
@@ -48,47 +48,57 @@
 
       <div v-else class="analysis-content">
         <!-- 收益概览 -->
-        <div class="section-header">
-          <span class="section-icon">📊</span>
-          <span class="section-title">收益概览</span>
-        </div>
-        <el-row :gutter="20" class="mb-4">
-          <el-col :span="8">
-            <div class="summary-card">
-              <div class="summary-label">今日收益</div>
-              <div class="summary-value" :class="latestDailyReturn >= 0 ? 'profit' : 'loss'">
-                {{ latestDailyReturn >= 0 ? '+' : '' }}{{ latestDailyReturn?.toFixed(2) }}%
-              </div>
+        <el-card shadow="never" class="overview-card">
+          <template #header>
+            <div class="card-header-title">
+              <span>📊 收益概览</span>
             </div>
-          </el-col>
-          <el-col :span="8">
-            <div class="summary-card">
-              <div class="summary-label">本周收益</div>
-              <div class="summary-value" :class="latestWeeklyReturn >= 0 ? 'profit' : 'loss'">
-                {{ latestWeeklyReturn >= 0 ? '+' : '' }}{{ latestWeeklyReturn?.toFixed(2) }}%
+          </template>
+
+          <el-row :gutter="20">
+            <el-col :span="6">
+              <div class="overview-item">
+                <div class="overview-label">今日收益</div>
+                <div class="overview-value" :class="latestDailyReturn >= 0 ? 'profit' : 'loss'">
+                  {{ latestDailyReturn >= 0 ? '+' : '' }}{{ latestDailyReturn?.toFixed(2) }}%
+                </div>
               </div>
-            </div>
-          </el-col>
-          <el-col :span="8">
-            <div class="summary-card">
-              <div class="summary-label">本月收益</div>
-              <div class="summary-value" :class="latestMonthlyReturn >= 0 ? 'profit' : 'loss'">
-                {{ latestMonthlyReturn >= 0 ? '+' : '' }}{{ latestMonthlyReturn?.toFixed(2) }}%
+            </el-col>
+            <el-col :span="6">
+              <div class="overview-item">
+                <div class="overview-label">本周收益</div>
+                <div class="overview-value" :class="latestWeeklyReturn >= 0 ? 'profit' : 'loss'">
+                  {{ latestWeeklyReturn >= 0 ? '+' : '' }}{{ latestWeeklyReturn?.toFixed(2) }}%
+                </div>
               </div>
-            </div>
-          </el-col>
-        </el-row>
+            </el-col>
+            <el-col :span="6">
+              <div class="overview-item">
+                <div class="overview-label">本月收益</div>
+                <div class="overview-value" :class="latestMonthlyReturn >= 0 ? 'profit' : 'loss'">
+                  {{ latestMonthlyReturn >= 0 ? '+' : '' }}{{ latestMonthlyReturn?.toFixed(2) }}%
+                </div>
+              </div>
+            </el-col>
+            <el-col :span="6">
+              <div class="overview-item">
+                <div class="overview-label">持仓成本</div>
+                <div class="overview-value">¥{{ stats.total_cost?.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</div>
+              </div>
+            </el-col>
+          </el-row>
+        </el-card>
 
         <!-- 收益统计表格（选项卡） -->
         <el-tabs v-model="activeTab" class="mt-4" stretch>
           <el-tab-pane label="📅 日收益率" name="daily">
             <div class="view-switcher">
               <el-button-group>
-                <el-button :type="dailyViewMode === 'table' ? 'primary' : ''" @click="dailyViewMode = 'table'">
-                  <el-icon><List /></el-icon> 表格
-                </el-button>
                 <el-button :type="dailyViewMode === 'chart' ? 'primary' : ''" @click="dailyViewMode = 'chart'">
                   <el-icon><TrendCharts /></el-icon> 折线图
+                </el-button>
+                <el-button :type="dailyViewMode === 'table' ? 'primary' : ''" @click="dailyViewMode = 'table'">
+                  <el-icon><List /></el-icon> 表格
                 </el-button>
               </el-button-group>
             </div>
@@ -124,11 +134,11 @@
           <el-tab-pane label="📈 周收益率" name="weekly">
             <div class="view-switcher">
               <el-button-group>
-                <el-button :type="weeklyViewMode === 'table' ? 'primary' : ''" @click="weeklyViewMode = 'table'">
-                  <el-icon><List /></el-icon> 表格
-                </el-button>
                 <el-button :type="weeklyViewMode === 'chart' ? 'primary' : ''" @click="weeklyViewMode = 'chart'">
                   <el-icon><TrendCharts /></el-icon> 折线图
+                </el-button>
+                <el-button :type="weeklyViewMode === 'table' ? 'primary' : ''" @click="weeklyViewMode = 'table'">
+                  <el-icon><List /></el-icon> 表格
                 </el-button>
               </el-button-group>
             </div>
@@ -153,11 +163,11 @@
           <el-tab-pane label="📉 月收益率" name="monthly">
             <div class="view-switcher">
               <el-button-group>
-                <el-button :type="monthlyViewMode === 'table' ? 'primary' : ''" @click="monthlyViewMode = 'table'">
-                  <el-icon><List /></el-icon> 表格
-                </el-button>
                 <el-button :type="monthlyViewMode === 'chart' ? 'primary' : ''" @click="monthlyViewMode = 'chart'">
                   <el-icon><TrendCharts /></el-icon> 折线图
+                </el-button>
+                <el-button :type="monthlyViewMode === 'table' ? 'primary' : ''" @click="monthlyViewMode = 'table'">
+                  <el-icon><List /></el-icon> 表格
                 </el-button>
               </el-button-group>
             </div>
@@ -277,9 +287,9 @@ const statsLoaded = ref(false)
 const analysisData = ref({})
 const analysisLoaded = ref(false)
 const activeTab = ref('daily')
-const dailyViewMode = ref('table')
-const weeklyViewMode = ref('table')
-const monthlyViewMode = ref('table')
+const dailyViewMode = ref('chart')
+const weeklyViewMode = ref('chart')
+const monthlyViewMode = ref('chart')
 const dailyChartRef = ref(null)
 const weeklyChartRef = ref(null)
 const monthlyChartRef = ref(null)
@@ -385,8 +395,12 @@ const loadAnalysis = async () => {
     const res = await actual.getAnalysis()
     if (res.data.success) {
       analysisData.value = res.data.data
-      // 数据加载完成后初始化图表
-      setTimeout(() => initDailyChart(), 100)
+      // 只初始化当前激活的图表
+      setTimeout(() => {
+        if (activeTab.value === 'daily' && dailyViewMode.value === 'chart') {
+          initDailyChart()
+        }
+      }, 200)
     }
   } catch (error) {
     console.error('加载收益分析失败:', error)
@@ -397,11 +411,15 @@ const loadAnalysis = async () => {
 
 // 初始化日收益率折线图
 const initDailyChart = () => {
-  if (!dailyChartRef.value || dailyViewMode.value !== 'chart') return
+  if (!dailyChartRef.value) return
 
-  if (!dailyChartInstance) {
-    dailyChartInstance = echarts.init(dailyChartRef.value)
+  const chartDom = dailyChartRef.value
+  if (!chartDom || !chartDom.offsetHeight) return
+
+  if (dailyChartInstance) {
+    dailyChartInstance.dispose()
   }
+  dailyChartInstance = echarts.init(chartDom)
 
   const data = dailyReturns.value.slice().reverse() // 正序排列用于图表
   const dates = data.map(d => d.date.slice(5)) // 只显示 MM-DD
@@ -487,11 +505,15 @@ const initDailyChart = () => {
 
 // 初始化周收益率折线图
 const initWeeklyChart = () => {
-  if (!weeklyChartRef.value || weeklyViewMode.value !== 'chart') return
+  if (!weeklyChartRef.value) return
 
-  if (!weeklyChartInstance) {
-    weeklyChartInstance = echarts.init(weeklyChartRef.value)
+  const chartDom = weeklyChartRef.value
+  if (!chartDom || !chartDom.offsetHeight) return
+
+  if (weeklyChartInstance) {
+    weeklyChartInstance.dispose()
   }
+  weeklyChartInstance = echarts.init(chartDom)
 
   const data = weeklyReturns.value.slice().reverse()
   const weeks = data.map(d => d.week)
@@ -563,11 +585,15 @@ const initWeeklyChart = () => {
 
 // 初始化月收益率折线图
 const initMonthlyChart = () => {
-  if (!monthlyChartRef.value || monthlyViewMode.value !== 'chart') return
+  if (!monthlyChartRef.value) return
 
-  if (!monthlyChartInstance) {
-    monthlyChartInstance = echarts.init(monthlyChartRef.value)
+  const chartDom = monthlyChartRef.value
+  if (!chartDom || !chartDom.offsetHeight) return
+
+  if (monthlyChartInstance) {
+    monthlyChartInstance.dispose()
   }
+  monthlyChartInstance = echarts.init(chartDom)
 
   const data = monthlyReturns.value.slice().reverse()
   const months = data.map(d => d.month.slice(5)) // 只显示 MM
@@ -637,23 +663,36 @@ const initMonthlyChart = () => {
 }
 
 // 监听视图模式切换和数据变化
-watch([dailyViewMode, dailyReturns], () => {
-  if (dailyViewMode.value === 'chart') {
+watch([dailyViewMode, dailyReturns, activeTab], () => {
+  if (dailyViewMode.value === 'chart' && activeTab.value === 'daily') {
     setTimeout(() => initDailyChart(), 100)
   }
 }, { deep: true })
 
-watch([weeklyViewMode, weeklyReturns], () => {
-  if (weeklyViewMode.value === 'chart') {
+watch([weeklyViewMode, weeklyReturns, activeTab], () => {
+  if (weeklyViewMode.value === 'chart' && activeTab.value === 'weekly') {
     setTimeout(() => initWeeklyChart(), 100)
   }
 }, { deep: true })
 
-watch([monthlyViewMode, monthlyReturns], () => {
-  if (monthlyViewMode.value === 'chart') {
+watch([monthlyViewMode, monthlyReturns, activeTab], () => {
+  if (monthlyViewMode.value === 'chart' && activeTab.value === 'monthly') {
     setTimeout(() => initMonthlyChart(), 100)
   }
 }, { deep: true })
+
+// 监听 tab 切换
+watch(activeTab, (newTab) => {
+  setTimeout(() => {
+    if (newTab === 'daily' && dailyViewMode.value === 'chart') {
+      initDailyChart()
+    } else if (newTab === 'weekly' && weeklyViewMode.value === 'chart') {
+      initWeeklyChart()
+    } else if (newTab === 'monthly' && monthlyViewMode.value === 'chart') {
+      initMonthlyChart()
+    }
+  }, 50)
+})
 
 onMounted(async () => {
   await Promise.all([loadStats(), loadPositions(), loadTrades(), loadAnalysis()])
@@ -731,57 +770,39 @@ onMounted(async () => {
   margin-top: 20px;
 }
 
-/* 区域标题 */
-.section-header {
+/* 概览卡片 */
+.overview-card {
+  margin-bottom: 20px;
+}
+
+.card-header-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 0;
-  border-bottom: 2px solid #f0f0f0;
 }
 
-.section-icon {
-  font-size: 18px;
-}
-
-.section-title {
-  font-size: 15px;
-  font-weight: bold;
-  color: #303133;
-}
-
-/* 收益概览卡片 */
-.summary-card {
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
-  border-radius: 10px;
-  padding: 24px;
+.overview-item {
+  padding: 16px;
   text-align: center;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.summary-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
-}
-
-.summary-label {
+.overview-label {
   font-size: 14px;
   color: #606266;
-  margin-bottom: 12px;
-  font-weight: 500;
+  margin-bottom: 8px;
 }
 
-.summary-value {
-  font-size: 26px;
+.overview-value {
+  font-size: 20px;
   font-weight: bold;
+  color: #409EFF;
 }
 
-.summary-value.profit {
+.overview-value.profit {
   color: #f56c6c;
 }
 
-.summary-value.loss {
+.overview-value.loss {
   color: #67c23a;
 }
 
