@@ -253,3 +253,161 @@ monthly_ret = (compounded - 1) * 100  # 转回百分比
 ---
 
 _最后更新：2026-04-11 05:48_
+
+---
+
+## 🔧 追加修复：月度汇总表格字段不匹配
+
+**修复时间：** 2026-04-11 05:55
+
+### 问题
+
+**现象：** 月度汇总表格显示空白，数据未渲染
+
+**原因：** 前端模板使用了不存在的字段
+
+```html
+<!-- 错误：后端没有 daily_return 字段 -->
+<el-table-column label="日收益率">
+  {{ row.daily_return.toFixed(2) }}%
+</el-table-column>
+```
+
+**后端返回字段：**
+- `month` - 月份
+- `return` - 月收益率
+- `sh_index_return` - 上证指数收益率
+- `trading_days` - 交易天数
+- `positive_days` - 盈利天数
+- `negative_days` - 亏损天数
+- `win_rate` - 胜率
+- `max_daily` - 最大单日收益
+- `min_daily` - 最大单日亏损
+
+### 修复
+
+**文件：** `frontend/src/views/SimAnalysis.vue`
+
+删除不存在的"日收益率"列，保留正确的字段。
+
+**修复后表格列：**
+1. 月份
+2. 组合月收益（`row.return`）✅
+3. 上证指数收益率（`row.sh_index_return`）✅
+4. 交易天数
+5. 盈亏天数比
+6. 最大单日收益
+7. 最大单日亏损
+
+### 数据验证
+
+```json
+{
+  "month": "2026-04",
+  "return": -3.83,
+  "sh_index_return": 0,
+  "trading_days": 7,
+  "positive_days": 3,
+  "negative_days": 3,
+  "win_rate": 42.86,
+  "max_daily": 0.29,
+  "min_daily": -4.06
+}
+```
+
+---
+
+_最后更新：2026-04-11 05:55_
+
+---
+
+## ✅ 终极修复：单一 Grid 容器方案（v5）
+
+**修复时间：** 2026-04-11 06:14
+
+### 根本问题
+
+**两个独立的 grid 容器无法保证列宽一致！**
+
+```
+❌ 修复前（两个独立 grid）：
+┌─────────────────────┐
+│ calendar-weekdays   │ ← grid 容器 1
+│ [日][一][二]...     │
+└─────────────────────┘
+┌─────────────────────┐
+│ calendar-days       │ ← grid 容器 2
+│ [1][2][3]...        │
+└─────────────────────┘
+```
+
+两个独立的 grid，列宽计算有微小差异 → **无法完美对齐**
+
+### 解决方案
+
+**使用单一 grid 容器，所有元素共享相同的列宽计算！**
+
+```
+✅ 修复后（单一 grid）：
+┌─────────────────────┐
+│ calendar-grid-days  │ ← 单一 grid 容器
+│ [日][一][二][三]... │ ← 星期标题（grid item）
+│ [1][2][3][4]...     │ ← 日期格子（grid item）
+└─────────────────────┘
+```
+
+### 代码实现
+
+**模板：**
+```html
+<div class="calendar-grid-days">
+  <!-- 星期标题 -->
+  <div class="calendar-weekday">日</div>
+  <div class="calendar-weekday">一</div>
+  <div class="calendar-weekday">二</div>
+  <div class="calendar-weekday">三</div>
+  <div class="calendar-weekday">四</div>
+  <div class="calendar-weekday">五</div>
+  <div class="calendar-weekday">六</div>
+  <!-- 日期格子 -->
+  <div class="calendar-day">1</div>
+  <div class="calendar-day">2</div>
+  ...
+</div>
+```
+
+**CSS：**
+```css
+.calendar-grid-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.calendar-weekday {
+  height: 24px;  /* 星期标题高度 */
+}
+
+.calendar-day {
+  height: 60px;  /* 日期格子高度 */
+  box-sizing: border-box;
+}
+```
+
+### 修复范围
+
+- ✅ `SimAnalysis.vue` - 模拟盘收益分析
+- ✅ `RealAnalysis.vue` - 实盘收益分析
+
+### 修复效果
+
+| 项目 | 修复前 | 修复后 |
+|------|--------|--------|
+| 对齐方式 | ❌ 两个独立 grid | ✅ 单一 grid |
+| 列宽一致性 | ❌ 有差异 | ✅ 完全一致 |
+| 对齐效果 | ❌ 偏移 | ✅ 完美对齐 |
+| CSS 复杂度 | 较高 | ✅ 更简洁 |
+
+---
+
+_最后更新：2026-04-11 06:14_
