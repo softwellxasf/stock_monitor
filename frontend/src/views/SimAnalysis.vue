@@ -357,7 +357,7 @@ const getCalendarDays = (monthStr) => {
     result.push({
       date: dateStr,
       day: day,
-      return: dayData ? dayData.return : 0
+      return: dayData ? (dayData.return * 100) : 0  // 转换为百分比
     })
   }
 
@@ -814,7 +814,7 @@ onMounted(async () => {
 .stat-sub {
   text-align: center;
   color: #909399;
-  font-size: 13px;
+  font-size: 14px;  /* 增大字体 */
   padding-bottom: 12px;
 }
 
@@ -861,7 +861,7 @@ onMounted(async () => {
 
 /* 表格样式 */
 :deep(.el-table) {
-  font-size: 13px;
+  font-size: 14px;  /* 增大字体 */
 }
 
 :deep(.el-table th) {
@@ -933,7 +933,7 @@ onMounted(async () => {
 .calendar-legend {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;  /* 分散对齐 */
   gap: 12px;
   margin-bottom: 20px;
   padding: 12px 16px;
@@ -942,7 +942,7 @@ onMounted(async () => {
 }
 
 .legend-label {
-  font-size: 13px;
+  font-size: 14px;  /* 增大字体 */
   color: #606266;
   font-weight: 500;
 }
@@ -1018,7 +1018,7 @@ onMounted(async () => {
 
 .calendar-weekdays span {
   text-align: center;
-  font-size: 11px;
+  font-size: 12px;  /* 增大字体 */
   color: #909399;
   padding: 6px 0;
   font-weight: 500;
@@ -1032,14 +1032,14 @@ onMounted(async () => {
 
 .calendar-day {
   aspect-ratio: 1;
-  min-height: 50px;
+  min-height: 60px;  /* 增大最小高度 */
   border-radius: 6px;
-  padding: 2px;
+  padding: 4px;  /* 增加内边距 */
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: 11px;
+  justify-content: space-between;  /* 分散对齐 */
+  font-size: 12px;  /* 增大字体 */
   border: 1px solid transparent;
   transition: transform 0.2s;
 }
@@ -1052,21 +1052,21 @@ onMounted(async () => {
   transform: scale(1.05);
 }
 
-.calendar-day.gain-5 { background: #dc3545; border-color: #dc3545; }
-.calendar-day.gain-3 { background: #f46a6a; border-color: #f46a6a; }
-.calendar-day.gain-1 { background: #ff9b9b; border-color: #ff9b9b; }
-.calendar-day.loss-1 { background: #9acd32; border-color: #9acd32; }
-.calendar-day.loss-3 { background: #7cba32; border-color: #7cba32; }
-.calendar-day.loss-5 { background: #5faa32; border-color: #5faa32; }
+.calendar-day.gain-5 { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border-color: #dc3545; box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4); }
+.calendar-day.gain-3 { background: linear-gradient(135deg, #f46a6a 0%, #e55a5a 100%); border-color: #f46a6a; box-shadow: 0 2px 6px rgba(244, 106, 106, 0.3); }
+.calendar-day.gain-1 { background: linear-gradient(135deg, #ff9b9b 0%, #ff8b8b 100%); border-color: #ff9b9b; }
+.calendar-day.loss-1 { background: linear-gradient(135deg, #9acd32 0%, #8ac222 100%); border-color: #9acd32; }
+.calendar-day.loss-3 { background: linear-gradient(135deg, #7cba32 0%, #6eae24 100%); border-color: #7cba32; box-shadow: 0 2px 6px rgba(124, 186, 50, 0.3); }
+.calendar-day.loss-5 { background: linear-gradient(135deg, #5faa32 0%, #519a24 100%); border-color: #5faa32; box-shadow: 0 2px 6px rgba(95, 170, 50, 0.4); }
 
-.day-num {
+.day-num {  /* 日期数字更大更清晰 */
   font-weight: bold;
-  font-size: 13px;
+  font-size: 14px;  /* 增大字体 */
   color: #333333;
 }
 
-.day-return {
-  font-size: 11px;
+.day-return {  /* 收益率显示优化 */
+  font-size: 12px;  /* 增大字体 */
   margin-top: 2px;
   font-weight: 600;
   color: #ffffff;
@@ -1076,7 +1076,7 @@ onMounted(async () => {
 .calendar-day.gain-5 .day-return,
 .calendar-day.gain-3 .day-return,
 .calendar-day.loss-3 .day-return,
-.calendar-day.loss-5 .day-return {
+.calendar-day.loss-5 .day-return {  /* 收益率显示优化 */
   color: #ffffff;
 }
 
