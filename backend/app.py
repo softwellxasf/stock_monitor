@@ -176,6 +176,7 @@ class SimDailySnapshot(db.Model):
     position_value = db.Column(db.Numeric(20,4))
     daily_return = db.Column(db.Numeric(10,4))
     total_return = db.Column(db.Numeric(10,4))
+    sh_index_return = db.Column(db.Numeric(10,4))  # 上证指数收益率
     created_at = db.Column(db.DateTime)
 
 # ============== API 路由 ==============
@@ -847,7 +848,8 @@ def get_sim_analysis():
             'date': s.snapshot_date.strftime('%Y-%m-%d') if s.snapshot_date else '',
             'daily_return': float(s.daily_return) if s.daily_return else 0,
             'total_return': float(s.total_return) if s.total_return else 0,
-            'total_asset': float(s.total_asset) if s.total_asset else 0
+            'total_asset': float(s.total_asset) if s.total_asset else 0,
+            'sh_index_return': float(s.sh_index_return) if s.sh_index_return else 0
         })
         # 仓位数据：由于旧数据 position_value 为 0，我们用 total_asset 作为参考
         # 仓位比例 = 持仓市值 / 总资产，如果 position_value 为 0 则用 total_asset 推断
@@ -869,13 +871,14 @@ def get_sim_analysis():
     from collections import defaultdict
     from datetime import datetime, timedelta
 
-    weekly_data = defaultdict(lambda: {'returns': [], 'dates': []})
+    weekly_data = defaultdict(lambda: {'returns': [], 'sh_returns': [], 'dates': []})
     for s in snapshots:
         if s.snapshot_date:
             # ISO calendar: (year, week, weekday)
             iso_cal = s.snapshot_date.isocalendar()
             week_key = f"{iso_cal[0]}-W{iso_cal[1]:02d}"
             weekly_data[week_key]['returns'].append(float(s.daily_return) if s.daily_return else 0)
+            weekly_data[week_key]['sh_returns'].append(float(s.sh_index_return) if s.sh_index_return else 0)
             weekly_data[week_key]['dates'].append(s.snapshot_date)
 
     weekly_returns = []
@@ -893,10 +896,18 @@ def get_sim_analysis():
         for r in data['returns']:
             compounded *= (1 + r / 100)
         weekly_ret = (compounded - 1) * 100
+
+        # 上证指数周收益率
+        sh_compounded = 1.0
+        for r in data['sh_returns']:
+            sh_compounded *= (1 + r / 100)
+        sh_weekly_ret = (sh_compounded - 1) * 100
+
         weekly_returns.append({
             'week': f"{monday.strftime('%m-%d')} ~ {sunday.strftime('%m-%d')}",
             'week_start': monday,
             'weekly_return': round(weekly_ret, 4),
+            'sh_index_return': round(sh_weekly_ret, 4),
             'trading_days': len(data['returns'])
         })
 
@@ -950,11 +961,12 @@ def get_sim_analysis():
     # 先找到最早的月份，然后填充所有月份（包括空仓月份）
     from dateutil.relativedelta import relativedelta
 
-    monthly_data = defaultdict(list)
+    monthly_data = defaultdict(lambda: {'returns': [], 'sh_returns': []})
     for s in snapshots:
         if s.snapshot_date:
             month_key = s.snapshot_date.strftime('%Y-%m')
-            monthly_data[month_key].append(float(s.daily_return) if s.daily_return else 0)
+            monthly_data[month_key]['returns'].append(float(s.daily_return) if s.daily_return else 0)
+            monthly_data[month_key]['sh_returns'].append(float(s.sh_index_return) if s.sh_index_return else 0)
 
     # 获取所有存在的月份
     existing_months = set(monthly_data.keys())
@@ -987,7 +999,9 @@ def get_sim_analysis():
     monthly_returns = []
     monthly_positions = []
     for month in all_months[-15:]:  # 取最近 15 个月
-        daily_rets = monthly_data.get(month, [])
+        data = monthly_data.get(month, {'returns': [], 'sh_returns': []})
+        daily_rets = data['returns'] if isinstance(data, dict) else data
+        sh_daily_rets = data.get('sh_returns', []) if isinstance(data, dict) else []
 
         if daily_rets:
             compounded = 1.0
@@ -997,9 +1011,19 @@ def get_sim_analysis():
         else:
             monthly_ret = 0
 
+        # 上证指数月收益率
+        if sh_daily_rets:
+            sh_compounded = 1.0
+            for r in sh_daily_rets:
+                sh_compounded *= (1 + r / 100)
+            sh_monthly_ret = (sh_compounded - 1) * 100
+        else:
+            sh_monthly_ret = 0
+
         monthly_returns.append({
             'month': month,
             'monthly_return': round(monthly_ret, 4),
+            'sh_index_return': round(sh_monthly_ret, 4),
             'trading_days': len(daily_rets),
             'positive_days': sum(1 for r in daily_rets if r > 0),
             'negative_days': sum(1 for r in daily_rets if r < 0)
@@ -1045,20 +1069,36 @@ def get_sim_analysis():
     # 月度汇总统计（最近 6 个月，倒序）
     monthly_summary = []
     for month, data in sorted(monthly_data.items(), key=lambda x: x[0], reverse=True)[:6]:
+        returns = data['returns'] if isinstance(data, dict) else data
+        sh_returns = data.get('sh_returns', []) if isinstance(data, dict) else []
+
         compounded = 1.0
-        for r in data:
+        for r in returns:
             compounded *= (1 + r / 100)
         monthly_ret = (compounded - 1) * 100
-        positive_days = sum(1 for r in data if r > 0)
-        negative_days = sum(1 for r in data if r < 0)
-        max_daily = max(data) if data else 0
-        min_daily = min(data) if data else 0
+
+        # 上证指数月收益率
+        sh_compounded = 1.0
+        for r in sh_returns:
+            sh_compounded *= (1 + r / 100)
+        sh_monthly_ret = (sh_compounded - 1) * 100
+
+        positive_days = sum(1 for r in returns if r > 0)
+        negative_days = sum(1 for r in returns if r < 0)
+        max_daily = max(returns) if returns else 0
+        min_daily = min(returns) if returns else 0
 
         monthly_summary.append({
             'month': month,
             'return': round(monthly_ret, 4),
-            'trading_days': len(data),
+            'sh_index_return': round(sh_monthly_ret, 4),
+            'trading_days': len(returns),
             'positive_days': positive_days,
+            'negative_days': negative_days,
+            'win_rate': round(positive_days / len(returns) * 100, 2) if returns else 0,
+            'max_daily': round(max_daily, 4),
+            'min_daily': round(min_daily, 4)
+        })
             'negative_days': negative_days,
             'win_rate': round(positive_days / len(data) * 100, 2) if data else 0,
             'max_daily': round(max_daily, 4),

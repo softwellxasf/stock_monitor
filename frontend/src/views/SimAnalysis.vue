@@ -106,10 +106,10 @@
             <!-- 表格视图 -->
             <el-table v-if="dailyViewMode === 'table'" :data="dailyReturns" stripe style="width: 100%" :max-height="350">
               <el-table-column prop="date" label="日期" width="100" />
-              <el-table-column label="日收益率" align="right">
+              <el-table-column label="上证指数收益率" align="right">
                 <template #default="{ row }">
-                  <el-tag :type="row.daily_return >= 0 ? 'danger' : 'success'" size="small">
-                    {{ row.daily_return >= 0 ? '+' : '' }}{{ row.daily_return.toFixed(4) }}%
+                  <el-tag :type="row.sh_index_return >= 0 ? 'danger' : 'success'" size="small">
+                    {{ row.sh_index_return >= 0 ? '+' : '' }}{{ row.sh_index_return.toFixed(2) }}%
                   </el-tag>
                 </template>
               </el-table-column>
@@ -146,10 +146,17 @@
             <!-- 表格视图 -->
             <el-table v-if="weeklyViewMode === 'table'" :data="weeklyReturns" stripe style="width: 100%" :max-height="350">
               <el-table-column prop="week" label="日期范围" width="140" />
-              <el-table-column label="周收益率" align="right">
+              <el-table-column label="组合周收益率" align="right">
                 <template #default="{ row }">
                   <el-tag :type="row.weekly_return >= 0 ? 'danger' : 'success'" size="small">
                     {{ row.weekly_return >= 0 ? '+' : '' }}{{ row.weekly_return.toFixed(2) }}%
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="上证指数收益率" align="right">
+                <template #default="{ row }">
+                  <el-tag :type="row.sh_index_return >= 0 ? 'danger' : 'success'" size="small">
+                    {{ row.sh_index_return >= 0 ? '+' : '' }}{{ row.sh_index_return.toFixed(2) }}%
                   </el-tag>
                 </template>
               </el-table-column>
@@ -175,10 +182,17 @@
             <!-- 表格视图 -->
             <el-table v-if="monthlyViewMode === 'table'" :data="monthlyReturns" stripe style="width: 100%" :max-height="350">
               <el-table-column prop="month" label="月份" width="100" />
-              <el-table-column label="月收益率" align="right">
+              <el-table-column label="组合月收益率" align="right">
                 <template #default="{ row }">
                   <el-tag :type="row.monthly_return >= 0 ? 'danger' : 'success'" size="small">
                     {{ row.monthly_return >= 0 ? '+' : '' }}{{ row.monthly_return.toFixed(2) }}%
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="上证指数收益率" align="right">
+                <template #default="{ row }">
+                  <el-tag :type="row.sh_index_return >= 0 ? 'danger' : 'success'" size="small">
+                    {{ row.sh_index_return >= 0 ? '+' : '' }}{{ row.sh_index_return.toFixed(2) }}%
                   </el-tag>
                 </template>
               </el-table-column>
@@ -198,10 +212,17 @@
           <el-tab-pane label="📋 月度汇总" name="summary">
             <el-table :data="monthlySummary" stripe style="width: 100%" :max-height="350">
               <el-table-column prop="month" label="月份" width="100" />
-              <el-table-column label="月收益" align="right">
+              <el-table-column label="组合月收益" align="right">
                 <template #default="{ row }">
                   <el-tag :type="row.return >= 0 ? 'danger' : 'success'" size="small">
                     {{ row.return >= 0 ? '+' : '' }}{{ row.return.toFixed(2) }}%
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="上证指数收益率" align="right">
+                <template #default="{ row }">
+                  <el-tag :type="row.sh_index_return >= 0 ? 'danger' : 'success'" size="small">
+                    {{ row.sh_index_return >= 0 ? '+' : '' }}{{ row.sh_index_return.toFixed(2) }}%
                   </el-tag>
                 </template>
               </el-table-column>
@@ -422,6 +443,7 @@ const initDailyChart = () => {
   const dates = data.map(d => d.date.slice(5))
   const dailyReturnsData = data.map(d => d.daily_return)
   const totalReturns = data.map(d => d.total_return)
+  const shIndexReturns = data.map(d => d.sh_index_return || 0)
 
   const option = {
     tooltip: {
@@ -442,7 +464,7 @@ const initDailyChart = () => {
       }
     },
     legend: {
-      data: ['日收益率', '累计收益'],
+      data: ['日收益率', '累计收益', '上证指数'],
       bottom: 10
     },
     grid: {
@@ -493,6 +515,15 @@ const initDailyChart = () => {
         symbolSize: 6,
         itemStyle: { color: '#409EFF' },
         lineStyle: { width: 2 }
+      },
+      {
+        name: '上证指数',
+        type: 'line',
+        data: shIndexReturns,
+        smooth: true,
+        symbol: 'none',
+        itemStyle: { color: '#67c23a' },
+        lineStyle: { width: 2, type: 'dashed' }
       }
     ]
   }
@@ -515,24 +546,28 @@ const initWeeklyChart = () => {
   const data = weeklyReturns.value.slice().reverse()
   const weeks = data.map(d => d.week)
   const weeklyReturnsData = data.map(d => d.weekly_return)
+  const shIndexReturns = data.map(d => d.sh_index_return || 0)
 
   const option = {
     tooltip: {
       trigger: 'axis',
       formatter: (params) => {
         const week = params[0].name
-        const value = params[0].value
-        const sign = value >= 0 ? '+' : ''
-        return `<div style="padding: 8px;">
-          <div style="font-weight: bold; margin-bottom: 8px;">${week}</div>
-          <div style="color: ${value >= 0 ? '#f56c6c' : '#67c23a'}; font-weight: bold;">
-            周收益率：${sign}${value.toFixed(2)}%
-          </div>
-        </div>`
+        let html = `<div style="padding: 8px;">`
+        params.forEach(p => {
+          const value = p.value
+          const sign = value >= 0 ? '+' : ''
+          const color = value >= 0 ? '#f56c6c' : '#67c23a'
+          html += `<div style="color: ${color}; font-weight: bold; margin-bottom: 4px;">
+            ${p.seriesName}: ${sign}${value.toFixed(2)}%
+          </div>`
+        })
+        html += `</div>`
+        return html
       }
     },
     legend: {
-      data: ['周收益率'],
+      data: ['组合周收益率', '上证指数'],
       bottom: 10
     },
     grid: {
@@ -565,7 +600,7 @@ const initWeeklyChart = () => {
     },
     series: [
       {
-        name: '周收益率',
+        name: '组合周收益率',
         type: 'line',
         data: weeklyReturnsData,
         smooth: true,
@@ -573,6 +608,15 @@ const initWeeklyChart = () => {
         symbolSize: 6,
         itemStyle: { color: '#f56c6c' },
         lineStyle: { width: 2 }
+      },
+      {
+        name: '上证指数',
+        type: 'line',
+        data: shIndexReturns,
+        smooth: true,
+        symbol: 'none',
+        itemStyle: { color: '#67c23a' },
+        lineStyle: { width: 2, type: 'dashed' }
       }
     ]
   }
@@ -595,24 +639,28 @@ const initMonthlyChart = () => {
   const data = monthlyReturns.value.slice().reverse()
   const months = data.map(d => d.month.slice(5))
   const monthlyReturnsData = data.map(d => d.monthly_return)
+  const shIndexReturns = data.map(d => d.sh_index_return || 0)
 
   const option = {
     tooltip: {
       trigger: 'axis',
       formatter: (params) => {
         const month = params[0].name
-        const value = params[0].value
-        const sign = value >= 0 ? '+' : ''
-        return `<div style="padding: 8px;">
-          <div style="font-weight: bold; margin-bottom: 8px;">${month}月</div>
-          <div style="color: ${value >= 0 ? '#f56c6c' : '#67c23a'}; font-weight: bold;">
-            月收益率：${sign}${value.toFixed(2)}%
-          </div>
-        </div>`
+        let html = `<div style="padding: 8px;">`
+        params.forEach(p => {
+          const value = p.value
+          const sign = value >= 0 ? '+' : ''
+          const color = value >= 0 ? '#f56c6c' : '#67c23a'
+          html += `<div style="color: ${color}; font-weight: bold; margin-bottom: 4px;">
+            ${p.seriesName}: ${sign}${value.toFixed(2)}%
+          </div>`
+        })
+        html += `</div>`
+        return html
       }
     },
     legend: {
-      data: ['月收益率'],
+      data: ['组合月收益率', '上证指数'],
       bottom: 10
     },
     grid: {
@@ -644,7 +692,7 @@ const initMonthlyChart = () => {
     },
     series: [
       {
-        name: '月收益率',
+        name: '组合月收益率',
         type: 'line',
         data: monthlyReturnsData,
         smooth: true,
@@ -652,6 +700,15 @@ const initMonthlyChart = () => {
         symbolSize: 6,
         itemStyle: { color: '#f56c6c' },
         lineStyle: { width: 2 }
+      },
+      {
+        name: '上证指数',
+        type: 'line',
+        data: shIndexReturns,
+        smooth: true,
+        symbol: 'none',
+        itemStyle: { color: '#67c23a' },
+        lineStyle: { width: 2, type: 'dashed' }
       }
     ]
   }
