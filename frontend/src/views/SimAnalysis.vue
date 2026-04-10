@@ -1021,7 +1021,10 @@ onMounted(async () => {
   font-size: 12px;
   color: #909399;
   font-weight: 500;
-  line-height: 24px;  /* 使用 line-height 代替 padding */
+  /* 确保 span 作为 grid item 与 calendar-day 宽度一致 */
+  display: block;
+  width: 100%;
+  line-height: 20px;
 }
 
 .calendar-days {
@@ -1042,7 +1045,9 @@ onMounted(async () => {
   font-size: 12px;
   border: 1px solid transparent;
   transition: transform 0.2s;
-  box-sizing: border-box;  /* 确保 padding 不影响尺寸 */
+  box-sizing: border-box;
+  width: 100%;  /* 确保占满 grid 单元格 */
+  height: 100%;  /* 确保占满 grid 单元格 */
 }
 
 .calendar-day.empty {
