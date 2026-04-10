@@ -305,15 +305,15 @@ const calendarData = computed(() => analysisData.value.calendar_data || [])
 
 const latestDailyReturn = computed(() => {
   const returns = dailyReturns.value
-  return returns.length > 0 ? returns[returns.length - 1]?.daily_return : 0
+  return returns.length > 0 ? returns[0]?.daily_return : 0
 })
 const latestWeeklyReturn = computed(() => {
   const returns = weeklyReturns.value
-  return returns.length > 0 ? returns[returns.length - 1]?.weekly_return : 0
+  return returns.length > 0 ? returns[0]?.weekly_return : 0
 })
 const latestMonthlyReturn = computed(() => {
   const returns = monthlyReturns.value
-  return returns.length > 0 ? returns[returns.length - 1]?.monthly_return : 0
+  return returns.length > 0 ? returns[0]?.monthly_return : 0
 })
 
 // 获取某月的交易日历数据
