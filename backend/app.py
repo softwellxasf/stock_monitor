@@ -597,7 +597,8 @@ def get_actual_analysis():
             'date': s.snapshot_date.strftime('%Y-%m-%d') if s.snapshot_date else '',
             'daily_return': float(s.daily_return) if s.daily_return else 0,
             'total_return': float(s.total_return) if s.total_return else 0,
-            'total_asset': float(s.total_asset) if s.total_asset else 0
+            'total_asset': float(s.total_asset) if s.total_asset else 0,
+            'sh_index_return': float(s.sh_index_return) if s.sh_index_return else 0
         })
     # 按日期倒序（最新的在前）
     daily_returns.sort(key=lambda x: x['date'], reverse=True)

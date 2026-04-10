@@ -106,10 +106,17 @@
             <!-- 表格视图 -->
             <el-table v-if="dailyViewMode === 'table'" :data="dailyReturns" stripe style="width: 100%" :max-height="350">
               <el-table-column prop="date" label="日期" width="100" />
-              <el-table-column label="日收益率" align="right">
+              <el-table-column label="组合日收益率" align="right">
                 <template #default="{ row }">
                   <el-tag :type="row.daily_return >= 0 ? 'danger' : 'success'" size="small">
                     {{ row.daily_return >= 0 ? '+' : '' }}{{ row.daily_return.toFixed(4) }}%
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="上证指数收益率" align="right">
+                <template #default="{ row }">
+                  <el-tag :type="row.sh_index_return >= 0 ? 'danger' : 'success'" size="small">
+                    {{ row.sh_index_return >= 0 ? '+' : '' }}{{ row.sh_index_return.toFixed(2) }}%
                   </el-tag>
                 </template>
               </el-table-column>
