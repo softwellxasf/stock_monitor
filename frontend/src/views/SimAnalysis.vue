@@ -1014,36 +1014,35 @@ onMounted(async () => {
   grid-template-columns: repeat(7, 1fr);
   gap: 3px;
   margin-bottom: 6px;
-  padding: 0 2px;  /* 与 calendar-days 对齐 */
 }
 
 .calendar-weekdays span {
   text-align: center;
-  font-size: 12px;  /* 增大字体 */
+  font-size: 12px;
   color: #909399;
-  padding: 6px 0;
   font-weight: 500;
+  line-height: 24px;  /* 使用 line-height 代替 padding */
 }
 
 .calendar-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 3px;
-  padding: 0 2px;  /* 与 calendar-weekdays 对齐 */
 }
 
 .calendar-day {
   aspect-ratio: 1;
-  min-height: 60px;  /* 增大最小高度 */
+  min-height: 60px;
   border-radius: 6px;
-  padding: 4px;  /* 增加内边距 */
+  padding: 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;  /* 分散对齐 */
-  font-size: 12px;  /* 增大字体 */
+  justify-content: space-between;
+  font-size: 12px;
   border: 1px solid transparent;
   transition: transform 0.2s;
+  box-sizing: border-box;  /* 确保 padding 不影响尺寸 */
 }
 
 .calendar-day.empty {
