@@ -270,10 +270,16 @@
           <div class="calendar-grid" v-if="monthlySummary.length > 0">
             <div v-for="month in monthlySummary" :key="month.month" class="calendar-month">
               <div class="calendar-month-title">{{ month.month }}</div>
-              <div class="calendar-weekdays">
-                <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
-              </div>
-              <div class="calendar-days">
+              <div class="calendar-grid-days">
+                <!-- 星期标题 -->
+                <div class="calendar-weekday">日</div>
+                <div class="calendar-weekday">一</div>
+                <div class="calendar-weekday">二</div>
+                <div class="calendar-weekday">三</div>
+                <div class="calendar-weekday">四</div>
+                <div class="calendar-weekday">五</div>
+                <div class="calendar-weekday">六</div>
+                <!-- 日期格子 -->
                 <div
                   v-for="day in getCalendarDays(month.month)"
                   :key="day.date || day.day"
@@ -1009,15 +1015,14 @@ onMounted(async () => {
   border-bottom: 1px solid #f0f0f0;
 }
 
-.calendar-weekdays {
+.calendar-grid-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 3px;
-  margin-bottom: 6px;
 }
 
-.calendar-weekdays span {
-  /* 让 span 完全作为 grid item，与 calendar-day 一致 */
+.calendar-weekday {
+  /* 星期标题样式 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1025,17 +1030,11 @@ onMounted(async () => {
   font-size: 12px;
   color: #909399;
   font-weight: 500;
-  height: 24px;  /* 固定高度 */
-}
-
-.calendar-days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
+  height: 24px;
 }
 
 .calendar-day {
-  /* 固定尺寸，确保与 weekday 对齐 */
+  /* 日期格子样式 */
   width: 100%;
   height: 60px;
   border-radius: 6px;
