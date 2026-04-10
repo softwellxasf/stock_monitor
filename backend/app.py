@@ -162,6 +162,8 @@ class DailySnapshot(db.Model):
     position_value = db.Column(db.Numeric(20,4))
     daily_return = db.Column(db.Numeric(10,4))
     total_return = db.Column(db.Numeric(10,4))
+    sh_index_return = db.Column(db.Numeric(10,4))  # 上证指数收益率
+    sh_index_close = db.Column(db.Numeric(10,4))   # 上证指数收盘价
     created_at = db.Column(db.DateTime)
 
 class SimDailySnapshot(db.Model):
