@@ -357,7 +357,7 @@ const getCalendarDays = (monthStr) => {
     result.push({
       date: dateStr,
       day: day,
-      return: dayData ? (dayData.return * 100) : 0  // 转换为百分比
+      return: dayData ? dayData.return : 0
     })
   }
 
