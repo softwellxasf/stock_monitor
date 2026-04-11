@@ -83,13 +83,7 @@ const loadStockList = async () => {
         code: s.stock_code,
         name: s.stock_name,
         current_price: parseFloat(s.current_price) || 0
-      })
-  
-  console.log('=== 交易标记数据 ===')
-  console.log('底仓买入标记数据:', buyMarks)
-  console.log('底仓卖出标记数据:', sellMarks)
-  console.log('做 T 买入标记数据:', tBuyMarks)
-  console.log('做 T 卖出标记数据:', tSellMarks))
+      }))
       if (stockList.value.length > 0) {
         searchForm.value.stockCode = stockList.value[0].code
         currentStock.value = stockList.value[0]
@@ -131,12 +125,6 @@ const loadDailyKData = async () => {
       start_date: start,
       end_date: end
     })
-  
-  console.log('=== 交易标记数据 ===')
-  console.log('底仓买入标记数据:', buyMarks)
-  console.log('底仓卖出标记数据:', sellMarks)
-  console.log('做 T 买入标记数据:', tBuyMarks)
-  console.log('做 T 卖出标记数据:', tSellMarks)
     if (tradesRes.data.success) {
       tradeRecords.value = tradesRes.data.data || []
       console.log('交易记录:', tradeRecords.value.length, '条')
@@ -200,12 +188,6 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
           value: 'T',
           itemStyle: { color: '#FF9900' }  // 橙色
         })
-  
-  console.log('=== 交易标记数据 ===')
-  console.log('底仓买入标记数据:', buyMarks)
-  console.log('底仓卖出标记数据:', sellMarks)
-  console.log('做 T 买入标记数据:', tBuyMarks)
-  console.log('做 T 卖出标记数据:', tSellMarks)
       } else {
         // 底仓买入：红色圆形背景 + 白色 B 字
         buyMarks.push({
@@ -218,12 +200,6 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
             textBorderWidth: 1
           }
         })
-  
-  console.log('=== 交易标记数据 ===')
-  console.log('底仓买入标记数据:', buyMarks)
-  console.log('底仓卖出标记数据:', sellMarks)
-  console.log('做 T 买入标记数据:', tBuyMarks)
-  console.log('做 T 卖出标记数据:', tSellMarks)
       }
     } else if (trade.direction === 'SELL') {
       if (isTTrade) {
@@ -234,12 +210,6 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
           value: 'T',
           itemStyle: { color: '#00CC00' }  // 绿色
         })
-  
-  console.log('=== 交易标记数据 ===')
-  console.log('底仓买入标记数据:', buyMarks)
-  console.log('底仓卖出标记数据:', sellMarks)
-  console.log('做 T 买入标记数据:', tBuyMarks)
-  console.log('做 T 卖出标记数据:', tSellMarks)
       } else {
         // 底仓卖出：蓝色圆形背景 + 白色 S 字
         sellMarks.push({
@@ -252,21 +222,9 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
             textBorderWidth: 1
           }
         })
-  
-  console.log('=== 交易标记数据 ===')
-  console.log('底仓买入标记数据:', buyMarks)
-  console.log('底仓卖出标记数据:', sellMarks)
-  console.log('做 T 买入标记数据:', tBuyMarks)
-  console.log('做 T 卖出标记数据:', tSellMarks)
       }
     }
   })
-  
-  console.log('=== 交易标记数据 ===')
-  console.log('底仓买入标记数据:', buyMarks)
-  console.log('底仓卖出标记数据:', sellMarks)
-  console.log('做 T 买入标记数据:', tBuyMarks)
-  console.log('做 T 卖出标记数据:', tSellMarks)
   if (!kChartRef.value) return
   
   if (kChartInstance) {
@@ -277,12 +235,6 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
     renderer: 'canvas',
     devicePixelRatio: window.devicePixelRatio || 1
   })
-  
-  console.log('=== 交易标记数据 ===')
-  console.log('底仓买入标记数据:', buyMarks)
-  console.log('底仓卖出标记数据:', sellMarks)
-  console.log('做 T 买入标记数据:', tBuyMarks)
-  console.log('做 T 卖出标记数据:', tSellMarks)
   
   // 专业金融配色
   const colorUp = '#FF0000'      // 红色（涨）
@@ -548,13 +500,7 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
               opacity: 0.8
             }
           }
-        })
-  
-  console.log('=== 交易标记数据 ===')
-  console.log('底仓买入标记数据:', buyMarks)
-  console.log('底仓卖出标记数据:', sellMarks)
-  console.log('做 T 买入标记数据:', tBuyMarks)
-  console.log('做 T 卖出标记数据:', tSellMarks),
+        }),
         barMaxWidth: 25,
         zlevel: 1
       },
@@ -729,6 +675,12 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
   console.log('底仓卖出标记:', sellMarks.length)
   console.log('做 T 买入标记:', tBuyMarks.length)
   console.log('做 T 卖出标记:', tSellMarks.length)
+  
+  console.log('交易标记统计:')
+  console.log('  底仓买入:', buyMarks.length)
+  console.log('  底仓卖出:', sellMarks.length)
+  console.log('  做 T 买入:', tBuyMarks.length)
+  console.log('  做 T 卖出:', tSellMarks.length)
   
   kChartInstance.setOption(option)
 }
