@@ -118,6 +118,18 @@ const loadDailyKData = async () => {
     
     // 获取真实日 K 数据
     const res = await dailyK.getData(searchForm.value.stockCode, start, end)
+    
+    // 获取交易记录
+    const tradesRes = await sim.getTrades({
+      stock_code: searchForm.value.stockCode,
+      start_date: start,
+      end_date: end
+    })
+    if (tradesRes.data.success) {
+      tradeRecords.value = tradesRes.data.data || []
+      console.log('交易记录:', tradeRecords.value.length, '条')
+    }
+    
     if (res.data.success) {
       const kData = res.data.data
       
