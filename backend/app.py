@@ -804,23 +804,15 @@ def get_sim_stats():
         for p in positions
     )
 
-    # 计算总盈亏 = 已实现盈亏（卖出交易）+ 未实现盈亏（当前持仓）
-    realized_profit = db.session.query(db.func.sum(SimTrade.amount - SimTrade.cost)).filter(
-        SimTrade.action == 'SELL'
-    ).scalar() or 0
-
-    # 未实现盈亏 = 当前持仓市值 - 持仓成本（模拟盘暂不计算实时市值，所以为 0）
-    unrealized_profit = 0  # 持仓浮动盈亏
-
-    total_profit = realized_profit + unrealized_profit
-
     # 账户信息
     account = SimAccount.query.filter_by(id=1).first()
 
-    # 如果有账户，计算收益率
+    # 计算总盈亏 = 账户总值 - 初始资金
     if account and account.total_capital:
+        total_profit = float(account.total_value) - float(account.total_capital)
         profit_pct = ((float(account.total_value) - float(account.total_capital)) / float(account.total_capital) * 100)
     else:
+        total_profit = 0
         profit_pct = 0
 
     return jsonify({
