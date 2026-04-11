@@ -437,7 +437,8 @@ def get_watchlist_history():
         WatchlistHistory.target_type,
         WatchlistHistory.pe_ratio,
         WatchlistHistory.pb_ratio,
-        WatchlistHistory.created_at
+        WatchlistHistory.quarter_start,
+        WatchlistHistory.quarter_end
     )
 
     # 条件过滤
@@ -449,15 +450,15 @@ def get_watchlist_history():
             )
         )
     if start_date:
-        query = query.filter(WatchlistHistory.created_at >= start_date)
+        query = query.filter(WatchlistHistory.quarter_start >= start_date)
     if end_date:
-        query = query.filter(WatchlistHistory.created_at <= end_date)
+        query = query.filter(WatchlistHistory.quarter_end <= end_date)
 
     # 总数
     total = query.count()
 
     # 分页排序
-    records = query.order_by(WatchlistHistory.created_at.desc()).offset(
+    records = query.order_by(WatchlistHistory.quarter_start.desc()).offset(
         (page - 1) * page_size
     ).limit(page_size).all()
 
@@ -472,7 +473,8 @@ def get_watchlist_history():
             'pe_ttm': float(r.pe_ratio) if r.pe_ratio else 0,
             'pb': float(r.pb_ratio) if r.pb_ratio else 0,
             'dividend_yield': 0,
-            'created_at': r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else None
+            'quarter_start': r.quarter_start.strftime('%Y-%m-%d') if r.quarter_start else None,
+            'quarter_end': r.quarter_end.strftime('%Y-%m-%d') if r.quarter_end else None
         })
 
     return jsonify({

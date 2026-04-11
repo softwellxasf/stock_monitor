@@ -37,7 +37,8 @@
 
       <!-- 历史估值表格 -->
       <el-table :data="records" stripe style="width: 100%" v-loading="loading">
-        <el-table-column prop="created_at" label="时间" width="160" />
+        <el-table-column prop="quarter_start" label="季度开始" width="120" />
+        <el-table-column prop="quarter_end" label="季度结束" width="120" />
         <el-table-column prop="stock_code" label="代码" width="120" />
         <el-table-column prop="stock_name" label="名称" width="100" />
         <el-table-column prop="target_price" label="目标价" width="100">
@@ -65,13 +66,6 @@
         <el-table-column prop="dividend_yield" label="股息率" width="90">
           <template #default="{ row }">
             <span>{{ (row.dividend_yield * 100)?.toFixed(2) || '-' }}%</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="80">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">
-              {{ row.status === 'active' ? '活跃' : '失效' }}
-            </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
