@@ -52,7 +52,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { sim, dailyK } from '../api'
 import { ElMessage } from 'element-plus'
-import * as echarts from 'echarts'
+import { createChart, ColorType, CrosshairMode } from 'lightweight-charts'
 
 const loading = ref(false)
 const stockList = ref([])
@@ -62,8 +62,11 @@ const currentPrice = ref(0)
 const tradeRecords = ref([])
 
 let chart = null
-const colorUp = '#FF0000'      // 红色（涨）
-const colorDown = '#00CC00'    // 绿色（跌）
+let candlestickSeries = null
+let volumeSeries = null
+let ma5Series = null
+let ma10Series = null
+let ma20Series = null
 
 const defaultDateRange = computed(() => {
   const end = new Date()
@@ -83,23 +86,98 @@ const initChart = () => {
   
   // 销毁旧图表
   if (chart) {
-    chart.dispose()
+    chart.remove()
   }
   
-  // 创建新图表
-  chart = echarts.init(chartContainer.value, 'light', {
-    renderer: 'canvas',
-    devicePixelRatio: window.devicePixelRatio || 1
+  // 创建新图表（TradingView 风格）
+  chart = createChart(chartContainer.value, {
+    width: chartContainer.value.clientWidth,
+    height: 600,
+    layout: {
+      background: { type: ColorType.Solid, color: '#FFFFFF' },
+      textColor: '#333333',
+    },
+    grid: {
+      vertLines: { color: '#f0f0f0' },
+      horzLines: { color: '#f0f0f0' },
+    },
+    crosshair: {
+      mode: CrosshairMode.Normal,
+      vertLine: {
+        labelBackgroundColor: '#2962FF',
+      },
+      horzLine: {
+        labelBackgroundColor: '#2962FF',
+      },
+    },
+    rightPriceScale: {
+      borderColor: '#e0e0e0',
+      scaleMargins: {
+        top: 0.2,
+        bottom: 0.2,
+      },
+    },
+    timeScale: {
+      borderColor: '#e0e0e0',
+      timeVisible: true,
+      secondsVisible: false,
+    },
   })
   
-  // 窗口大小变化时重新渲染
+  // 添加 K 线系列（红涨绿跌）
+  candlestickSeries = chart.addCandlestickSeries({
+    upColor: '#FF0000',
+    downColor: '#00CC00',
+    borderUpColor: '#FF0000',
+    borderDownColor: '#00CC00',
+    wickUpColor: '#FF0000',
+    wickDownColor: '#00CC00',
+  })
+  
+  // 添加成交量系列
+  volumeSeries = chart.addHistogramSeries({
+    color: '#26a69a',
+    priceFormat: {
+      type: 'volume',
+    },
+    priceScaleId: '',
+    scaleMargins: {
+      top: 0.85,
+      bottom: 0,
+    },
+  })
+  
+  // 添加 MA5 均线
+  ma5Series = chart.addLineSeries({
+    color: '#FFFFFF',
+    lineWidth: 2,
+    title: 'MA5',
+  })
+  
+  // 添加 MA10 均线
+  ma10Series = chart.addLineSeries({
+    color: '#FFD700',
+    lineWidth: 2,
+    title: 'MA10',
+  })
+  
+  // 添加 MA20 均线
+  ma20Series = chart.addLineSeries({
+    color: '#00FFFF',
+    lineWidth: 2,
+    title: 'MA20',
+  })
+  
+  // 自适应窗口大小
   window.addEventListener('resize', handleResize)
 }
 
 // 处理窗口大小变化
 const handleResize = () => {
   if (chart && chartContainer.value) {
-    chart.resize()
+    chart.applyOptions({
+      width: chartContainer.value.clientWidth,
+    })
   }
 }
 
@@ -107,15 +185,15 @@ const handleResize = () => {
 const calculateMA = (data, period) => {
   const ma = []
   for (let i = 0; i < data.length; i++) {
-    if (i < period - 1) {
-      ma.push('-')
-      continue
-    }
+    if (i < period - 1) continue
     let sum = 0
     for (let j = 0; j < period; j++) {
-      sum += data[i - j][1] // 使用收盘价
+      sum += data[i - j].close
     }
-    ma.push(sum / period)
+    ma.push({
+      time: data[i].time,
+      value: sum / period,
+    })
   }
   return ma
 }
@@ -179,29 +257,37 @@ const loadDailyKData = async () => {
       const kData = res.data.data
       
       // 准备图表数据
-      const dates = kData.map(item => item.date)
-      const ohlcData = kData.map(item => [
-        item.open,
-        item.close,
-        item.low,
-        item.high
-      ])
-      const volumes = kData.map(item => item.volume)
+      const candleData = kData.map(item => ({
+        time: item.date,
+        open: item.open,
+        high: item.high,
+        low: item.low,
+        close: item.close,
+      }))
+      
+      const volumeData = kData.map(item => ({
+        time: item.date,
+        value: item.volume,
+        color: item.close >= item.open ? '#FF0000' : '#00CC00',
+      }))
       
       // 计算均线
-      const ma5Data = calculateMA(ohlcData, 5)
-      const ma10Data = calculateMA(ohlcData, 10)
-      const ma20Data = calculateMA(ohlcData, 20)
+      const ma5Data = calculateMA(candleData, 5)
+      const ma10Data = calculateMA(candleData, 10)
+      const ma20Data = calculateMA(candleData, 20)
       
-      // 准备交易标记
-      const markers = prepareMarkers(kData, dates)
+      // 更新图表
+      candlestickSeries.setData(candleData)
+      volumeSeries.setData(volumeData)
+      ma5Series.setData(ma5Data)
+      ma10Series.setData(ma10Data)
+      ma20Series.setData(ma20Data)
       
-      // 渲染图表
-      renderChart(dates, ohlcData, volumes, { ma5Data, ma10Data, ma20Data }, markers)
+      // 添加交易标记
+      updateMarkers(candleData)
       
-      console.log('K 线数据:', kData.length, '条')
-      console.log('交易记录:', tradeRecords.value.length, '条')
-      console.log('交易标记:', markers.length, '个')
+      console.log('K 线数据:', candleData.length, '条')
+      console.log('均线数据: MA5=' + ma5Data.length + ', MA10=' + ma10Data.length + ', MA20=' + ma20Data.length)
     }
   } catch (error) {
     console.error('加载日 K 数据失败:', error)
@@ -211,376 +297,73 @@ const loadDailyKData = async () => {
   }
 }
 
-// 准备交易标记
-const prepareMarkers = (kData, dates) => {
+// 更新交易标记
+const updateMarkers = (candleData) => {
   const markers = []
   
   tradeRecords.value.forEach(trade => {
     const tradeDate = trade.trade_date?.split(' ')[0] || trade.trade_date
-    const dataIndex = dates.indexOf(tradeDate)
+    const dataIndex = candleData.findIndex(d => d.time === tradeDate)
     if (dataIndex === -1) return
     
-    const candle = kData[dataIndex]
+    const candle = candleData[dataIndex]
     const isTTrade = trade.remark?.includes('T') || trade.remark?.includes('做 T')
     
     if (trade.direction === 'BUY') {
       if (isTTrade) {
         // 做 T 买入：橙色小圆点
         markers.push({
-          coord: [tradeDate, candle.low * 0.96],
-          value: 'T',
-          itemStyle: {
-            color: '#FF9900',
-            borderColor: '#FFFFFF',
-            borderWidth: 1
-          },
-          symbol: 'circle',
-          symbolSize: 8
+          time: tradeDate,
+          position: 'belowBar',
+          color: '#FF9900',
+          shape: 'circle',
+          text: 'T',
+          size: 0.5,
         })
       } else {
         // 底仓买入：红色圆形 B
         markers.push({
-          coord: [tradeDate, candle.low * 0.94],
-          value: 'B',
-          itemStyle: {
-            color: '#FF4444',
-            borderColor: '#FFFFFF',
-            borderWidth: 1
-          },
-          symbol: 'circle',
-          symbolSize: 12
+          time: tradeDate,
+          position: 'belowBar',
+          color: '#FF4444',
+          shape: 'circle',
+          text: 'B',
+          size: 1,
         })
       }
     } else if (trade.direction === 'SELL') {
       if (isTTrade) {
         // 做 T 卖出：绿色小圆点
         markers.push({
-          coord: [tradeDate, candle.high * 1.04],
-          value: 'T',
-          itemStyle: {
-            color: '#00CC00',
-            borderColor: '#FFFFFF',
-            borderWidth: 1
-          },
-          symbol: 'circle',
-          symbolSize: 8
+          time: tradeDate,
+          position: 'aboveBar',
+          color: '#00CC00',
+          shape: 'circle',
+          text: 'T',
+          size: 0.5,
         })
       } else {
         // 底仓卖出：蓝色圆形 S
         markers.push({
-          coord: [tradeDate, candle.high * 1.06],
-          value: 'S',
-          itemStyle: {
-            color: '#4488FF',
-            borderColor: '#FFFFFF',
-            borderWidth: 1
-          },
-          symbol: 'circle',
-          symbolSize: 12
+          time: tradeDate,
+          position: 'aboveBar',
+          color: '#4488FF',
+          shape: 'circle',
+          text: 'S',
+          size: 1,
         })
       }
     }
   })
   
-  return markers
-}
-
-// 渲染图表
-const renderChart = (dates, ohlcData, volumes, indicators, markers) => {
-  const option = {
-    backgroundColor: '#FFFFFF',
-    animation: false,
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'cross'
-      },
-      borderWidth: 1,
-      borderColor: '#ccc',
-      padding: 10,
-      textStyle: {
-        fontSize: 12
-      },
-      formatter: (params) => {
-        const dataIndex = params[0].dataIndex
-        const data = ohlcData[dataIndex]
-        const date = dates[dataIndex]
-        const open = data[0].toFixed(2)
-        const high = data[3].toFixed(2)
-        const low = data[2].toFixed(2)
-        const close = data[1].toFixed(2)
-        const volume = volumes[dataIndex].toLocaleString()
-        
-        return `
-          <div style="font-weight:bold;margin-bottom:5px;">${date}</div>
-          <div>开盘：${open}</div>
-          <div>最高：${high}</div>
-          <div>最低：${low}</div>
-          <div>收盘：${close}</div>
-          <div>成交量：${volume}</div>
-        `
-      }
-    },
-    legend: {
-      data: ['K 线', 'MA5', 'MA10', 'MA20', '成交量'],
-      top: 30,
-      textStyle: {
-        fontSize: 11
-      }
-    },
-    grid: [
-      {
-        left: '8%',
-        right: '8%',
-        height: '55%',
-        top: '12%'
-      },
-      {
-        left: '8%',
-        right: '8%',
-        top: '70%',
-        height: '12%'
-      }
-    ],
-    axisPointer: {
-      link: [
-        { xAxisIndex: [0, 1] }
-      ]
-    },
-    xAxis: [
-      {
-        type: 'category',
-        data: dates,
-        scale: true,
-        boundaryGap: false,
-        axisLine: {
-          lineStyle: {
-            color: '#333333'
-          }
-        },
-        axisLabel: {
-          fontSize: 10,
-          rotate: 0,
-          interval: Math.floor(dates.length / 10)
-        },
-        splitLine: {
-          show: false
-        },
-        min: 'dataMin',
-        max: 'dataMax'
-      },
-      {
-        type: 'category',
-        gridIndex: 1,
-        data: dates,
-        axisLabel: {
-          show: false
-        },
-        axisLine: {
-          lineStyle: {
-            color: '#333333'
-          }
-        },
-        splitLine: {
-          show: false
-        }
-      }
-    ],
-    yAxis: [
-      {
-        scale: true,
-        name: '股价',
-        nameLocation: 'middle',
-        nameGap: 50,
-        position: 'right',
-        axisLine: {
-          lineStyle: {
-            color: '#333333'
-          }
-        },
-        axisLabel: {
-          fontSize: 10,
-          formatter: (value) => value.toFixed(2)
-        },
-        splitLine: {
-          lineStyle: {
-            color: '#f0f0f0',
-            type: 'dashed'
-          }
-        }
-      },
-      {
-        scale: true,
-        gridIndex: 1,
-        name: '成交量',
-        nameLocation: 'middle',
-        nameGap: 40,
-        position: 'right',
-        axisLine: {
-          lineStyle: {
-            color: '#333333'
-          }
-        },
-        axisLabel: {
-          fontSize: 10,
-          formatter: (value) => {
-            if (value >= 1000000) {
-              return (value / 1000000).toFixed(1) + 'M'
-            } else if (value >= 1000) {
-              return (value / 1000).toFixed(0) + 'K'
-            }
-            return value.toString()
-          }
-        },
-        splitLine: {
-          show: false
-        }
-      }
-    ],
-    dataZoom: [
-      {
-        type: 'inside',
-        xAxisIndex: [0, 1],
-        start: 50,
-        end: 100,
-        minValueSpan: 10
-      },
-      {
-        show: true,
-        xAxisIndex: [0, 1],
-        type: 'slider',
-        top: '95%',
-        height: 20,
-        start: 50,
-        end: 100,
-        borderColor: '#ddd',
-        fillerColor: 'rgba(0,0,0,0.1)',
-        handleStyle: {
-          color: '#999'
-        }
-      }
-    ],
-    series: [
-      {
-        name: 'K 线',
-        type: 'candlestick',
-        data: ohlcData,
-        itemStyle: {
-          color: colorUp,
-          color0: colorDown,
-          borderColor: colorUp,
-          borderColor0: colorDown,
-          borderWidth: 2
-        },
-        barMaxWidth: 20,
-        barMinWidth: 8,
-        zlevel: 1
-      },
-      {
-        name: 'MA5',
-        type: 'line',
-        data: indicators.ma5Data,
-        smooth: true,
-        lineStyle: {
-          width: 2,
-          color: '#FFFFFF',
-          type: 'solid',
-          shadowColor: 'rgba(0,0,0,0.3)',
-          shadowBlur: 2
-        },
-        symbol: 'none',
-        zlevel: 2
-      },
-      {
-        name: 'MA10',
-        type: 'line',
-        data: indicators.ma10Data,
-        smooth: true,
-        lineStyle: {
-          width: 2,
-          color: '#FFD700',
-          type: 'solid',
-          shadowColor: 'rgba(0,0,0,0.3)',
-          shadowBlur: 2
-        },
-        symbol: 'none',
-        zlevel: 2
-      },
-      {
-        name: 'MA20',
-        type: 'line',
-        data: indicators.ma20Data,
-        smooth: true,
-        lineStyle: {
-          width: 2,
-          color: '#00FFFF',
-          type: 'solid',
-          shadowColor: 'rgba(0,0,0,0.3)',
-          shadowBlur: 2
-        },
-        symbol: 'none',
-        zlevel: 2
-      },
-      {
-        name: '成交量',
-        type: 'bar',
-        xAxisIndex: 1,
-        yAxisIndex: 1,
-        data: volumes.map((vol, idx) => {
-          const open = ohlcData[idx][0]
-          const close = ohlcData[idx][1]
-          return {
-            value: vol,
-            itemStyle: {
-              color: close >= open ? colorUp : colorDown,
-              opacity: 0.8
-            }
-          }
-        }),
-        barMaxWidth: 20,
-        zlevel: 1
-      },
-      {
-        name: '交易标记',
-        type: 'scatter',
-        xAxisIndex: 0,
-        yAxisIndex: 0,
-        data: markers,
-        symbol: (value, params) => {
-          return params.data.symbol || 'circle'
-        },
-        symbolSize: (value, params) => {
-          return params.data.symbolSize || 10
-        },
-        itemStyle: {
-          color: (params) => {
-            return params.data.itemStyle?.color || '#FF0000'
-          },
-          borderColor: '#FFFFFF',
-          borderWidth: 1
-        },
-        label: {
-          show: true,
-          formatter: (params) => {
-            return params.data.value || ''
-          },
-          color: '#FFFFFF',
-          fontSize: 10,
-          fontWeight: 'bold',
-          position: 'inside'
-        },
-        zlevel: 3
-      }
-    ]
-  }
-  
-  chart.setOption(option)
+  candlestickSeries.setMarkers(markers)
+  console.log('交易标记:', markers.length, '个')
 }
 
 // 清理资源
 onUnmounted(() => {
   if (chart) {
-    chart.dispose()
+    chart.remove()
     window.removeEventListener('resize', handleResize)
   }
 })
