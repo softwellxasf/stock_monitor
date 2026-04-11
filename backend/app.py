@@ -313,6 +313,7 @@ def get_sim_trades():
     page_size = request.args.get('page_size', 20, type=int)
     keyword = request.args.get('keyword', '')
     direction = request.args.get('direction', '')
+    stock_code = request.args.get('stock_code', '')
     start_date = request.args.get('start_date', '')
     end_date = request.args.get('end_date', '')
 
@@ -331,6 +332,8 @@ def get_sim_trades():
     )
 
     # 条件过滤
+    if stock_code:
+        query = query.filter(SimTrade.stock_code == stock_code)
     if keyword:
         query = query.filter(
             db.or_(
