@@ -1393,7 +1393,6 @@ def init_db():
 def get_daily_k():
     """获取日 K 线数据"""
     from sqlalchemy import text
-    from models import Stock
     
     stock_code = request.args.get('stock_code')
     start_date = request.args.get('start_date')
