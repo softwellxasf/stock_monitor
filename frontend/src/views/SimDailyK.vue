@@ -164,37 +164,51 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
     if (dataIndex === -1) return
     
     const isTTrade = trade.remark?.includes('T') || trade.remark?.includes('做 T')
+    const high = ohlcData[dataIndex][2]
+    const low = ohlcData[dataIndex][3]
     
     if (trade.direction === 'BUY') {
       if (isTTrade) {
+        // 做 T 买入：橙色小圆点 + T 字
         tBuyMarks.push({
           xAxis: dataIndex,
-          yAxis: ohlcData[dataIndex][3] * 0.97,  // 最低价下方
-          value: 'T+',
-          itemStyle: { color: '#0066FF' }  // 蓝色
+          yAxis: low * 0.96,
+          value: 'T',
+          itemStyle: { color: '#FF9900' }  // 橙色
         })
       } else {
+        // 底仓买入：红色圆形背景 + 白色 B 字
         buyMarks.push({
           xAxis: dataIndex,
-          yAxis: ohlcData[dataIndex][3] * 0.95,
-          value: '↑',
-          itemStyle: { color: '#FFCC00' }  // 黄色
+          yAxis: low * 0.94,
+          value: 'B',
+          itemStyle: { 
+            color: '#FF4444',  // 红色背景
+            textBorderColor: '#FFFFFF',  // 白色边框
+            textBorderWidth: 1
+          }
         })
       }
     } else if (trade.direction === 'SELL') {
       if (isTTrade) {
+        // 做 T 卖出：绿色小圆点 + T 字
         tSellMarks.push({
           xAxis: dataIndex,
-          yAxis: ohlcData[dataIndex][2] * 1.03,  // 最高价上方
-          value: 'T-',
-          itemStyle: { color: '#9900CC' }  // 紫色
+          yAxis: high * 1.04,
+          value: 'T',
+          itemStyle: { color: '#00CC00' }  // 绿色
         })
       } else {
+        // 底仓卖出：蓝色圆形背景 + 白色 S 字
         sellMarks.push({
           xAxis: dataIndex,
-          yAxis: ohlcData[dataIndex][2] * 1.05,
-          value: '↓',
-          itemStyle: { color: '#FF3333' }  // 红色
+          yAxis: high * 1.06,
+          value: 'S',
+          itemStyle: { 
+            color: '#4488FF',  // 蓝色背景
+            textBorderColor: '#FFFFFF',  // 白色边框
+            textBorderWidth: 1
+          }
         })
       }
     }
@@ -481,17 +495,36 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
         renderItem: (params, api) => {
           const point = api.coord([api.value(0), api.value(1)])
           return {
-            type: 'text',
+            type: 'circle',
+            shape: { r: 10 },
+            position: [point[0], point[1]],
             style: {
-              text: '↑',
-              fill: '#FFCC00',
-              fontSize: 16,
-              fontWeight: 'bold'
-            },
-            position: [point[0], point[1] - 15]
+              fill: '#FF4444'
+            }
           }
         },
         zlevel: 3
+      },
+      {
+        name: '底仓买入文字',
+        type: 'custom',
+        xAxisIndex: 0,
+        yAxisIndex: 0,
+        data: buyMarks,
+        renderItem: (params, api) => {
+          const point = api.coord([api.value(0), api.value(1)])
+          return {
+            type: 'text',
+            style: {
+              text: 'B',
+              fill: '#FFFFFF',
+              fontSize: 12,
+              fontWeight: 'bold'
+            },
+            position: [point[0], point[1] - 4]
+          }
+        },
+        zlevel: 4
       },
       {
         name: '底仓卖出',
@@ -502,17 +535,36 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
         renderItem: (params, api) => {
           const point = api.coord([api.value(0), api.value(1)])
           return {
-            type: 'text',
+            type: 'circle',
+            shape: { r: 10 },
+            position: [point[0], point[1]],
             style: {
-              text: '↓',
-              fill: '#FF3333',
-              fontSize: 16,
-              fontWeight: 'bold'
-            },
-            position: [point[0], point[1] + 15]
+              fill: '#4488FF'
+            }
           }
         },
         zlevel: 3
+      },
+      {
+        name: '底仓卖出文字',
+        type: 'custom',
+        xAxisIndex: 0,
+        yAxisIndex: 0,
+        data: sellMarks,
+        renderItem: (params, api) => {
+          const point = api.coord([api.value(0), api.value(1)])
+          return {
+            type: 'text',
+            style: {
+              text: 'S',
+              fill: '#FFFFFF',
+              fontSize: 12,
+              fontWeight: 'bold'
+            },
+            position: [point[0], point[1] - 4]
+          }
+        },
+        zlevel: 4
       },
       {
         name: '做 T 买入',
@@ -523,17 +575,36 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
         renderItem: (params, api) => {
           const point = api.coord([api.value(0), api.value(1)])
           return {
-            type: 'text',
+            type: 'circle',
+            shape: { r: 6 },
+            position: [point[0], point[1]],
             style: {
-              text: '+',
-              fill: '#0066FF',
-              fontSize: 12,
-              fontWeight: 'bold'
-            },
-            position: [point[0], point[1] - 10]
+              fill: '#FF9900'
+            }
           }
         },
         zlevel: 3
+      },
+      {
+        name: '做 T 买入文字',
+        type: 'custom',
+        xAxisIndex: 0,
+        yAxisIndex: 0,
+        data: tBuyMarks,
+        renderItem: (params, api) => {
+          const point = api.coord([api.value(0), api.value(1)])
+          return {
+            type: 'text',
+            style: {
+              text: 'T',
+              fill: '#FFFFFF',
+              fontSize: 9,
+              fontWeight: 'bold'
+            },
+            position: [point[0], point[1] - 3]
+          }
+        },
+        zlevel: 4
       },
       {
         name: '做 T 卖出',
@@ -544,17 +615,36 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
         renderItem: (params, api) => {
           const point = api.coord([api.value(0), api.value(1)])
           return {
-            type: 'text',
+            type: 'circle',
+            shape: { r: 6 },
+            position: [point[0], point[1]],
             style: {
-              text: '-',
-              fill: '#9900CC',
-              fontSize: 12,
-              fontWeight: 'bold'
-            },
-            position: [point[0], point[1] + 10]
+              fill: '#00CC00'
+            }
           }
         },
         zlevel: 3
+      },
+      {
+        name: '做 T 卖出文字',
+        type: 'custom',
+        xAxisIndex: 0,
+        yAxisIndex: 0,
+        data: tSellMarks,
+        renderItem: (params, api) => {
+          const point = api.coord([api.value(0), api.value(1)])
+          return {
+            type: 'text',
+            style: {
+              text: 'T',
+              fill: '#FFFFFF',
+              fontSize: 9,
+              fontWeight: 'bold'
+            },
+            position: [point[0], point[1] - 3]
+          }
+        },
+        zlevel: 4
       }
     ]
   }
