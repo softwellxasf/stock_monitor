@@ -619,12 +619,16 @@ def get_actual_analysis():
                 'weekly_returns': [],
                 'monthly_returns': [],
                 'calendar_data': [],
-                'monthly_summary': []
+                'monthly_summary': [],
+                'daily_positions': [],
+                'weekly_positions': [],
+                'monthly_positions': []
             }
         })
 
     # 日收益率数据（最近 60 天，倒序）
     daily_returns = []
+    daily_positions = []
     for s in snapshots[:60]:
         daily_returns.append({
             'date': s.snapshot_date.strftime('%Y-%m-%d') if s.snapshot_date else '',
@@ -633,8 +637,19 @@ def get_actual_analysis():
             'total_asset': float(s.total_asset) if s.total_asset else 0,
             'sh_index_return': float(s.sh_index_return) if s.sh_index_return else 0
         })
+        # 日仓位数据
+        pos_value = float(s.position_value) if s.position_value else 0
+        total_asset = float(s.total_asset) if s.total_asset else 0
+        pos_ratio = (pos_value / total_asset * 100) if total_asset > 0 else 0
+        daily_positions.append({
+            'date': s.snapshot_date.strftime('%Y-%m-%d') if s.snapshot_date else '',
+            'position_value': round(pos_value, 2),
+            'position_ratio': round(pos_ratio, 2),
+            'total_asset': total_asset
+        })
     # 按日期倒序（最新的在前）
     daily_returns.sort(key=lambda x: x['date'], reverse=True)
+    daily_positions.sort(key=lambda x: x['date'], reverse=True)
 
     # 周收益率统计（按周分组）
     from collections import defaultdict
@@ -682,6 +697,62 @@ def get_actual_analysis():
 
     # 按日期倒序排序（最新的在前）
     weekly_returns.sort(key=lambda x: x['week_start'], reverse=True)
+
+    # 周仓位数据
+    weekly_positions = []
+    for w in weekly_returns:
+        week_str = w["week"]
+        try:
+            start_date_str, end_date_str = week_str.split(" ~ ")
+            if snapshots:
+                min_year = min(s.snapshot_date.year for s in snapshots if s.snapshot_date)
+                max_year = max(s.snapshot_date.year for s in snapshots if s.snapshot_date)
+            else:
+                min_year = max_year = 2026
+            
+            monday = None
+            sunday = None
+            for year in range(max_year, min_year - 1, -1):
+                try:
+                    from datetime import datetime as dt
+                    monday = dt.strptime(f"{year}-{start_date_str}", "%Y-%m-%d").date()
+                    sunday = dt.strptime(f"{year}-{end_date_str}", "%Y-%m-%d").date()
+                    week_snapshots = [s for s in snapshots if s.snapshot_date and monday <= s.snapshot_date <= sunday]
+                    if week_snapshots:
+                        break
+                except:
+                    continue
+            
+            if not monday or not sunday:
+                from datetime import datetime as dt
+                monday = dt.strptime(f"{max_year}-{start_date_str}", "%Y-%m-%d").date()
+                sunday = dt.strptime(f"{max_year}-{end_date_str}", "%Y-%m-%d").date()
+            
+            week_snapshots = [s for s in snapshots if s.snapshot_date and monday <= s.snapshot_date <= sunday]
+            avg_pos_ratio = 0
+            avg_position_value = 0
+            if week_snapshots:
+                total_assets = []
+                position_values = []
+                for ws in week_snapshots:
+                    if ws.total_asset and ws.position_value:
+                        total_assets.append(float(ws.total_asset))
+                        position_values.append(float(ws.position_value))
+                if total_assets and sum(total_assets) > 0:
+                    avg_position_value = sum(position_values) / len(position_values) if position_values else 0
+                    avg_pos_ratio = (sum(position_values) / sum(total_assets) * 100) if total_assets else 0
+            
+            weekly_positions.append({
+                "week": week_str,
+                "position_ratio": round(avg_pos_ratio, 2),
+                "position_value": round(avg_position_value, 2)
+            })
+        except Exception as e:
+            weekly_positions.append({
+                "week": w["week"],
+                "position_ratio": 0,
+                "position_value": 0
+            })
 
     # 移除辅助字段
     for w in weekly_returns:
@@ -762,6 +833,46 @@ def get_actual_analysis():
     # 按月份倒序（最新的在前）
     monthly_summary.sort(key=lambda x: x['month'], reverse=True)
 
+    # 月仓位数据
+    monthly_positions = []
+    for month_data in monthly_summary:
+        month = month_data['month']
+        try:
+            year, month_num = map(int, month.split('-'))
+            from datetime import datetime as dt
+            month_start = dt(year, month_num, 1).date()
+            if month_num == 12:
+                month_end = dt(year + 1, 1, 1).date()
+            else:
+                month_end = dt(year, month_num + 1, 1).date()
+            
+            # 计算这个月的平均仓位比例
+            month_snapshots = [s for s in snapshots if s.snapshot_date and month_start <= s.snapshot_date < month_end]
+            avg_pos_ratio = 0
+            avg_position_value = 0
+            if month_snapshots:
+                total_assets = []
+                position_values = []
+                for ws in month_snapshots:
+                    if ws.total_asset and ws.position_value:
+                        total_assets.append(float(ws.total_asset))
+                        position_values.append(float(ws.position_value))
+                if total_assets and sum(total_assets) > 0:
+                    avg_position_value = sum(position_values) / len(position_values) if position_values else 0
+                    avg_pos_ratio = (sum(position_values) / sum(total_assets) * 100) if total_assets else 0
+
+            monthly_positions.append({
+                'month': month,
+                'position_ratio': round(avg_pos_ratio, 2),
+                'position_value': round(avg_position_value, 2)
+            })
+        except Exception as e:
+            monthly_positions.append({
+                'month': month,
+                'position_ratio': 0,
+                'position_value': 0
+            })
+
     return jsonify({
         'success': True,
         'data': {
@@ -769,7 +880,10 @@ def get_actual_analysis():
             'weekly_returns': weekly_returns,
             'monthly_returns': monthly_returns,
             'calendar_data': calendar_data,
-            'monthly_summary': monthly_summary
+            'monthly_summary': monthly_summary,
+            'daily_positions': daily_positions,
+            'weekly_positions': weekly_positions,
+            'monthly_positions': monthly_positions
         }
     })
 
@@ -1184,6 +1298,46 @@ def get_sim_analysis():
         })
     # 按月份倒序（最新的在前）— 模拟盘
     monthly_summary.sort(key=lambda x: x['month'], reverse=True)
+
+    # 月仓位数据
+    monthly_positions = []
+    for month_data in monthly_summary:
+        month = month_data['month']
+        try:
+            year, month_num = map(int, month.split('-'))
+            from datetime import datetime as dt
+            month_start = dt(year, month_num, 1).date()
+            if month_num == 12:
+                month_end = dt(year + 1, 1, 1).date()
+            else:
+                month_end = dt(year, month_num + 1, 1).date()
+            
+            # 计算这个月的平均仓位比例
+            month_snapshots = [s for s in snapshots if s.snapshot_date and month_start <= s.snapshot_date < month_end]
+            avg_pos_ratio = 0
+            avg_position_value = 0
+            if month_snapshots:
+                total_assets = []
+                position_values = []
+                for ws in month_snapshots:
+                    if ws.total_asset and ws.position_value:
+                        total_assets.append(float(ws.total_asset))
+                        position_values.append(float(ws.position_value))
+                if total_assets and sum(total_assets) > 0:
+                    avg_position_value = sum(position_values) / len(position_values) if position_values else 0
+                    avg_pos_ratio = (sum(position_values) / sum(total_assets) * 100) if total_assets else 0
+
+            monthly_positions.append({
+                'month': month,
+                'position_ratio': round(avg_pos_ratio, 2),
+                'position_value': round(avg_position_value, 2)
+            })
+        except Exception as e:
+            monthly_positions.append({
+                'month': month,
+                'position_ratio': 0,
+                'position_value': 0
+            })
 
     return jsonify({
         'success': True,
