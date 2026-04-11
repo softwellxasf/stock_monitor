@@ -34,7 +34,6 @@
           start-placeholder="开始日期"
           end-placeholder="结束日期"
           value-format="YYYY-MM-DD"
-          :default-value="defaultDateRange"
           style="width: 240px"
           @change="loadDailyKData"
         />
@@ -438,6 +437,14 @@ window.addEventListener('resize', () => {
 
 onMounted(() => {
   loadStockList()
+  // 设置默认日期范围（最近 30 天）
+  const end = new Date()
+  const start = new Date()
+  start.setDate(start.getDate() - 30)
+  searchForm.value.dateRange = [
+    start.toISOString().split('T')[0],
+    end.toISOString().split('T')[0]
+  ]
 })
 </script>
 
