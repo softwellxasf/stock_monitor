@@ -19,6 +19,12 @@ const routes = [
         meta: { requiresAuth: true, title: '模拟概览' }
       },
       {
+        path: 'real',
+        name: 'ActualDashboard',
+        component: () => import('../views/ActualDashboard.vue'),
+        meta: { requiresAuth: true, title: '实盘概览' }
+      },
+      {
         path: 'sim/positions',
         name: 'SimPositions',
         component: () => import('../views/SimPositions.vue'),

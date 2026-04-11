@@ -39,10 +39,12 @@ export const watchlist = {
 }
 
 export const actual = {
+  getAccount: () => api.get('/sim-account'),  // 实盘和模拟盘共用账户信息
   getPositions: (params) => api.get('/actual-positions', { params }),
   getTrades: (params) => api.get('/actual-trades', { params }),
   getStats: () => api.get('/actual-stats'),
-  getAnalysis: () => api.get('/actual-analysis')
+  getAnalysis: () => api.get('/actual-analysis'),
+  getList: () => api.get('/watchlist')
 }
 
 export default api

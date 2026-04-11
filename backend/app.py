@@ -563,6 +563,13 @@ def get_actual_stats():
     # 收益率
     profit_pct = ((total_market_value - total_cost) / total_cost * 100) if total_cost > 0 else 0
 
+    # 计算当前仓位比例
+    account = SimAccount.query.filter_by(id=1).first()
+    if account and account.total_value > 0:
+        position_ratio = (total_market_value / float(account.total_value) * 100)
+    else:
+        position_ratio = 0
+    
     return jsonify({
         'success': True,
         'data': {
@@ -571,7 +578,8 @@ def get_actual_stats():
             'total_market_value': round(total_market_value, 2),
             'total_cost': round(total_cost, 2),
             'total_profit': round(float(total_profit), 2),
-            'profit_pct': round(profit_pct, 2)
+            'profit_pct': round(profit_pct, 2),
+            'position_ratio': round(position_ratio, 2)  # 新增：当前仓位比例
         }
     })
 
@@ -781,7 +789,8 @@ def get_sim_stats():
             total_asset, cash, position_value = latest_snapshot
             account = SimAccount.query.filter_by(id=1).first()
             if account:
-                account.cash = float(cash)
+                # 正确设置现金和持仓市值
+                account.cash = float(cash) if cash else float(total_asset)
                 account.total_value = float(total_asset)
                 db.session.commit()
     except Exception as e:
@@ -795,8 +804,9 @@ def get_sim_stats():
 
     # 计算总持仓市值和总成本
     positions = SimPosition.query.filter(SimPosition.quantity > 0).all()
+    # 从 sim_positions 表计算持仓市值（使用 cost_price 作为参考）
     total_market_value = sum(
-        0  # 模拟盘暂不计算实时市值
+        (float(p.cost_price) if p.cost_price else 0) * p.quantity
         for p in positions
     )
     total_cost = sum(
@@ -815,6 +825,13 @@ def get_sim_stats():
         total_profit = 0
         profit_pct = 0
 
+    # 计算当前仓位比例
+    account = SimAccount.query.filter_by(id=1).first()
+    if account and account.total_value > 0:
+        position_ratio = (total_market_value / float(account.total_value) * 100)
+    else:
+        position_ratio = 0
+    
     return jsonify({
         'success': True,
         'data': {
@@ -823,7 +840,8 @@ def get_sim_stats():
             'total_market_value': round(total_market_value, 2),
             'total_cost': round(total_cost, 2),
             'total_profit': round(float(total_profit), 2),
-            'profit_pct': round(profit_pct, 2)
+            'profit_pct': round(profit_pct, 2),
+            'position_ratio': round(position_ratio, 2)  # 新增：当前仓位比例
         }
     })
 
@@ -862,10 +880,10 @@ def get_sim_analysis():
             }
         })
 
-    # 日收益率数据（最近 60 天，倒序）
+    # 日收益率数据（根据时间段过滤，倒序）
     daily_returns = []
     daily_positions = []
-    for s in snapshots[:60]:
+    for s in snapshots:  # 使用过滤后的所有快照
         daily_returns.append({
             'date': s.snapshot_date.strftime('%Y-%m-%d') if s.snapshot_date else '',
             'daily_return': float(s.daily_return) if s.daily_return else 0,
@@ -944,11 +962,32 @@ def get_sim_analysis():
         # 从 week_str 提取日期范围，如 "04-01 ~ 04-07"
         try:
             start_date_str, end_date_str = week_str.split(' ~ ')
-            # 使用 2026 年作为基准年份（因为快照数据是 2026 年的）
-            year = 2026
-            monday = datetime.strptime(f"{year}-{start_date_str}", "%Y-%m-%d").date()
-            sunday = datetime.strptime(f"{year}-{end_date_str}", "%Y-%m-%d").date()
-
+            # 从快照数据中获取实际年份范围
+            if snapshots:
+                min_year = min(s.snapshot_date.year for s in snapshots if s.snapshot_date)
+                max_year = max(s.snapshot_date.year for s in snapshots if s.snapshot_date)
+            else:
+                min_year = max_year = 2026
+            
+            # 尝试找到匹配的日期范围
+            monday = None
+            sunday = None
+            for year in range(max_year, min_year - 1, -1):
+                try:
+                    monday = datetime.strptime(f"{year}-{start_date_str}", "%Y-%m-%d").date()
+                    sunday = datetime.strptime(f"{year}-{end_date_str}", "%Y-%m-%d").date()
+                    # 检查是否有该周的快照数据
+                    week_snapshots = [s for s in snapshots if s.snapshot_date and monday <= s.snapshot_date <= sunday]
+                    if week_snapshots:
+                        break
+                except:
+                    continue
+            
+            if not monday or not sunday:
+                # 如果找不到匹配的年份，使用最近一年的数据
+                monday = datetime.strptime(f"{max_year}-{start_date_str}", "%Y-%m-%d").date()
+                sunday = datetime.strptime(f"{max_year}-{end_date_str}", "%Y-%m-%d").date()
+            
             # 计算这周的平均仓位比例
             week_snapshots = [s for s in snapshots if s.snapshot_date and monday <= s.snapshot_date <= sunday]
             avg_pos_ratio = 0
