@@ -71,8 +71,6 @@
               @current-change="handleCurrentChange"
             />
           </div>
-        </el-card>
-      </div>
     </el-card>
   </div>
 </template>
