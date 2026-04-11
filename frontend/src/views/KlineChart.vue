@@ -627,6 +627,8 @@ const onStockChange = (code) => {
 }
 
 const onKlineTypeChange = () => {
+  // 切换 K 线类型时，更新日期范围为对应默认值
+  dateRange.value = defaultDateRange.value
   loadData()
 }
 
