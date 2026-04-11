@@ -72,6 +72,7 @@ const searchForm = ref({
   stockCode: '',
   dateRange: []
 })
+const tradeRecords = ref([])  // 交易记录
 
 // 加载股票列表
 const loadStockList = async () => {
@@ -149,8 +150,55 @@ const loadDailyKData = async () => {
   }
 }
 
-// 渲染专业 K 线图表
+// 渲染专业 K 线图表（带交易标记）
 const renderKChart = (dates, ohlcData, volumes, indicators) => {
+  // 准备交易标记数据
+  const buyMarks = []  // 底仓买入（黄色向上箭头）
+  const sellMarks = []  // 底仓卖出（红色向下箭头）
+  const tBuyMarks = []  // 做 T 买入（蓝色加号）
+  const tSellMarks = []  // 做 T 卖出（紫色减号）
+  
+  tradeRecords.value.forEach(trade => {
+    const tradeDate = trade.trade_date?.split(' ')[0] || trade.trade_date
+    const dataIndex = dates.indexOf(tradeDate)
+    if (dataIndex === -1) return
+    
+    const isTTrade = trade.remark?.includes('T') || trade.remark?.includes('做 T')
+    
+    if (trade.direction === 'BUY') {
+      if (isTTrade) {
+        tBuyMarks.push({
+          xAxis: dataIndex,
+          yAxis: ohlcData[dataIndex][3] * 0.97,  // 最低价下方
+          value: 'T+',
+          itemStyle: { color: '#0066FF' }  // 蓝色
+        })
+      } else {
+        buyMarks.push({
+          xAxis: dataIndex,
+          yAxis: ohlcData[dataIndex][3] * 0.95,
+          value: '↑',
+          itemStyle: { color: '#FFCC00' }  // 黄色
+        })
+      }
+    } else if (trade.direction === 'SELL') {
+      if (isTTrade) {
+        tSellMarks.push({
+          xAxis: dataIndex,
+          yAxis: ohlcData[dataIndex][2] * 1.03,  // 最高价上方
+          value: 'T-',
+          itemStyle: { color: '#9900CC' }  // 紫色
+        })
+      } else {
+        sellMarks.push({
+          xAxis: dataIndex,
+          yAxis: ohlcData[dataIndex][2] * 1.05,
+          value: '↓',
+          itemStyle: { color: '#FF3333' }  // 红色
+        })
+      }
+    }
+  })
   if (!kChartRef.value) return
   
   if (kChartInstance) {
@@ -212,10 +260,10 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
       }
     },
     legend: {
-      data: ['K 线', 'MA5', 'MA10', 'MA20', '成交量'],
+      data: ['K 线', 'MA5', 'MA10', 'MA20', '成交量', '底仓买入', '底仓卖出', '做 T 买入', '做 T 卖出'],
       top: 30,
       textStyle: {
-        fontSize: 11
+        fontSize: 10
       }
     },
     grid: [
@@ -423,6 +471,90 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
         }),
         barMaxWidth: 25,
         zlevel: 1
+      },
+      {
+        name: '底仓买入',
+        type: 'custom',
+        xAxisIndex: 0,
+        yAxisIndex: 0,
+        data: buyMarks,
+        renderItem: (params, api) => {
+          const point = api.coord([api.value(0), api.value(1)])
+          return {
+            type: 'text',
+            style: {
+              text: '↑',
+              fill: '#FFCC00',
+              fontSize: 16,
+              fontWeight: 'bold'
+            },
+            position: [point[0], point[1] - 15]
+          }
+        },
+        zlevel: 3
+      },
+      {
+        name: '底仓卖出',
+        type: 'custom',
+        xAxisIndex: 0,
+        yAxisIndex: 0,
+        data: sellMarks,
+        renderItem: (params, api) => {
+          const point = api.coord([api.value(0), api.value(1)])
+          return {
+            type: 'text',
+            style: {
+              text: '↓',
+              fill: '#FF3333',
+              fontSize: 16,
+              fontWeight: 'bold'
+            },
+            position: [point[0], point[1] + 15]
+          }
+        },
+        zlevel: 3
+      },
+      {
+        name: '做 T 买入',
+        type: 'custom',
+        xAxisIndex: 0,
+        yAxisIndex: 0,
+        data: tBuyMarks,
+        renderItem: (params, api) => {
+          const point = api.coord([api.value(0), api.value(1)])
+          return {
+            type: 'text',
+            style: {
+              text: '+',
+              fill: '#0066FF',
+              fontSize: 12,
+              fontWeight: 'bold'
+            },
+            position: [point[0], point[1] - 10]
+          }
+        },
+        zlevel: 3
+      },
+      {
+        name: '做 T 卖出',
+        type: 'custom',
+        xAxisIndex: 0,
+        yAxisIndex: 0,
+        data: tSellMarks,
+        renderItem: (params, api) => {
+          const point = api.coord([api.value(0), api.value(1)])
+          return {
+            type: 'text',
+            style: {
+              text: '-',
+              fill: '#9900CC',
+              fontSize: 12,
+              fontWeight: 'bold'
+            },
+            position: [point[0], point[1] + 10]
+          }
+        },
+        zlevel: 3
       }
     ]
   }
