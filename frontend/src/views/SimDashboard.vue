@@ -91,6 +91,19 @@
       <template #header>
         <div class="card-header-title">
           <span>📊 仓位分析</span>
+          <div class="date-range-picker">
+            <el-date-picker
+              v-model="positionDateRange"
+              type="daterange"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              :default-value="defaultDateRange"
+              @change="loadPositionData"
+              value-format="YYYY-MM-DD"
+              style="width: 240px"
+            />
+          </div>
         </div>
       </template>
 
@@ -232,6 +245,8 @@ const activePositionTab = ref('daily')
 const dailyPositions = ref([])
 const weeklyPositions = ref([])
 const monthlyPositions = ref([])
+const positionDateRange = ref([])
+const defaultDateRange = ref([])
 const dailyPositionChartRef = ref(null)
 const weeklyPositionChartRef = ref(null)
 const monthlyPositionChartRef = ref(null)
@@ -289,6 +304,12 @@ onMounted(async () => {
       initDailyPositionChart()
     }, 100)
 
+    // 设置默认日期范围（最近 60 天）
+    const today = new Date()
+    const sixtyDaysAgo = new Date(today.getTime() - 60 * 24 * 60 * 60 * 1000)
+    positionDateRange.value = [sixtyDaysAgo.toISOString().split('T')[0], today.toISOString().split('T')[0]]
+    defaultDateRange.value = [sixtyDaysAgo, today]
+    
     // 窗口大小改变时重新渲染图表
     window.addEventListener('resize', () => {
       if (dailyPositionChartInstance) dailyPositionChartInstance.resize()
@@ -302,6 +323,30 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+// 加载仓位数据（支持时间段查询）
+const loadPositionData = async () => {
+  try {
+    const [start, end] = positionDateRange.value || []
+    if (!start || !end) return
+    
+    const analysisRes = await sim.getAnalysis(start, end)
+    if (analysisRes.data.success) {
+      const analysisData = analysisRes.data.data || {}
+      dailyPositions.value = analysisData.daily_positions || []
+      weeklyPositions.value = analysisData.weekly_positions || []
+      monthlyPositions.value = analysisData.monthly_positions || []
+      
+      // 重新初始化图表
+      setTimeout(() => {
+        initDailyPositionChart()
+      }, 100)
+    }
+  } catch (error) {
+    console.error('加载仓位数据失败:', error)
+    ElMessage.error('加载仓位数据失败')
+  }
+}
 
 // 监听 tab 切换
 watch(activePositionTab, (newTab) => {
@@ -688,5 +733,11 @@ const initMonthlyPositionChart = () => {
 
 .currency {
   color: #606266;
+}
+</style>
+
+<style scoped>
+.date-range-picker {
+  margin-left: 20px;
 }
 </style>

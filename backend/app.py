@@ -831,8 +831,21 @@ def get_sim_stats():
 @jwt_required()
 def get_sim_analysis():
     """获取模拟盘收益分析数据（日/周/月收益率 + 日历热力图）"""
+    # 获取时间段参数
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    
     # 获取所有快照数据
-    snapshots = SimDailySnapshot.query.order_by(SimDailySnapshot.snapshot_date.desc()).all()
+    query = SimDailySnapshot.query.order_by(SimDailySnapshot.snapshot_date.desc())
+    
+    # 如果提供了时间段，进行过滤
+    if start_date and end_date:
+        from datetime import datetime
+        start = datetime.strptime(start_date, '%Y-%m-%d')
+        end = datetime.strptime(end_date, '%Y-%m-%d')
+        query = query.filter(SimDailySnapshot.snapshot_date >= start, SimDailySnapshot.snapshot_date <= end)
+    
+    snapshots = query.all()
 
     if not snapshots:
         return jsonify({

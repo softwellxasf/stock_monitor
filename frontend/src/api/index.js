@@ -23,7 +23,14 @@ export const sim = {
   getPositions: (params) => api.get('/sim-positions', { params }),
   getTrades: (params) => api.get('/sim-trades', { params }),
   getStats: () => api.get('/sim-stats'),
-  getAnalysis: () => api.get('/sim-analysis'),
+  getAnalysis: (startDate, endDate) => {
+    const params = new URLSearchParams()
+    if (startDate && endDate) {
+      params.append('start_date', startDate)
+      params.append('end_date', endDate)
+    }
+    return api.get(`/sim-analysis?${params.toString()}`)
+  },
   getList: () => api.get('/watchlist')
 }
 
