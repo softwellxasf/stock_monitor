@@ -360,9 +360,10 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
           color0: colorDown,
           borderColor: colorUp,
           borderColor0: colorDown,
-          borderWidth: 1
+          borderWidth: 2
         },
-        barMaxWidth: 15,
+        barMaxWidth: 20,
+        barMinWidth: 8,
         zlevel: 1
       },
       {
@@ -415,7 +416,8 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
           return {
             value: vol,
             itemStyle: {
-              color: close >= open ? colorUp : colorDown
+              color: close >= open ? colorUp : colorDown,
+              opacity: 0.8
             }
           }
         }),
