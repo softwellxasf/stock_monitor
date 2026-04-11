@@ -55,3 +55,14 @@ export const actual = {
 }
 
 export default api
+
+// 日 K 数据接口
+export const dailyK = {
+  getData: (stockCode, startDate, endDate) => {
+    const params = new URLSearchParams()
+    params.append('stock_code', stockCode)
+    params.append('start_date', startDate)
+    params.append('end_date', endDate)
+    return api.get(`/daily-k?${params.toString()}`)
+  }
+}

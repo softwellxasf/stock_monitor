@@ -51,7 +51,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { sim } from '../api'
+import { sim, dailyK } from '../api'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
 
@@ -73,67 +73,6 @@ const searchForm = ref({
   stockCode: '',
   dateRange: []
 })
-
-// 计算 MA 均线
-const calculateMA = (data, period) => {
-  const ma = []
-  for (let i = 0; i < data.length; i++) {
-    if (i < period - 1) {
-      ma.push('-')
-      continue
-    }
-    let sum = 0
-    for (let j = 0; j < period; j++) {
-      sum += data[i - j][1] // 使用收盘价
-    }
-    ma.push(sum / period)
-  }
-  return ma
-}
-
-// 计算 MACD 指标
-const calculateMACD = (data) => {
-  const closes = data.map(item => item[1])
-  const ema12 = []
-  const ema26 = []
-  
-  // 计算 EMA12
-  for (let i = 0; i < closes.length; i++) {
-    if (i === 0) {
-      ema12.push(closes[i])
-    } else {
-      ema12.push((closes[i] - ema12[i - 1]) * (2 / 13) + ema12[i - 1])
-    }
-  }
-  
-  // 计算 EMA26
-  for (let i = 0; i < closes.length; i++) {
-    if (i === 0) {
-      ema26.push(closes[i])
-    } else {
-      ema26.push((closes[i] - ema26[i - 1]) * (2 / 27) + ema26[i - 1])
-    }
-  }
-  
-  // 计算 DIF、DEA、MACD
-  const dif = []
-  const dea = []
-  const macd = []
-  
-  for (let i = 0; i < closes.length; i++) {
-    dif.push(ema12[i] - ema26[i])
-    
-    if (i === 0) {
-      dea.push(dif[i])
-    } else {
-      dea.push((dif[i] - dea[i - 1]) * (2 / 10) + dea[i - 1])
-    }
-    
-    macd.push((dif[i] - dea[i]) * 2)
-  }
-  
-  return { dif, dea, macd }
-}
 
 // 加载股票列表
 const loadStockList = async () => {
@@ -164,7 +103,7 @@ const onStockChange = (code) => {
   loadDailyKData()
 }
 
-// 加载日 K 数据
+// 加载日 K 数据（使用真实数据）
 const loadDailyKData = async () => {
   if (!searchForm.value.stockCode) return
   
@@ -172,34 +111,31 @@ const loadDailyKData = async () => {
   try {
     const [start, end] = searchForm.value.dateRange || defaultDateRange.value
     
-    // 获取持仓数据
-    const positionsRes = await sim.getPositions()
-    if (positionsRes.data.success) {
-      const positions = positionsRes.data.data || []
-      const stock = positions.find(p => p.stock_code === searchForm.value.stockCode)
+    // 获取真实日 K 数据
+    const res = await dailyK.getData(searchForm.value.stockCode, start, end)
+    if (res.data.success) {
+      const kData = res.data.data
       
-      if (!stock) {
-        ElMessage.warning('未找到该股票持仓数据')
+      if (kData.length === 0) {
+        ElMessage.warning('暂无该股票日 K 数据')
         loading.value = false
         return
       }
       
-      // 获取收益分析数据
-      const analysisRes = await sim.getAnalysis(start, end)
-      if (analysisRes.data.success) {
-        const dailyData = analysisRes.data.data.daily_returns || []
-        
-        // 生成专业 K 线数据
-        const kData = generateKData(dailyData, stock)
-        
-        // 计算技术指标
-        const ma5 = calculateMA(kData, 5)
-        const ma10 = calculateMA(kData, 10)
-        const ma20 = calculateMA(kData, 20)
-        const { dif, dea, macd } = calculateMACD(kData)
-        
-        renderKChart(kData, { ma5, ma10, ma20, dif, dea, macd })
-      }
+      // 准备图表数据
+      const dates = kData.map(item => item.date)
+      const ohlcData = kData.map(item => [
+        item.open,
+        item.low,
+        item.high,
+        item.close
+      ])
+      const volumes = kData.map(item => item.volume)
+      const ma5Data = kData.map(item => item.ma5)
+      const ma10Data = kData.map(item => item.ma10)
+      const ma20Data = kData.map(item => item.ma20)
+      
+      renderKChart(dates, ohlcData, volumes, { ma5Data, ma10Data, ma20Data })
     }
   } catch (error) {
     console.error('加载日 K 数据失败:', error)
@@ -209,41 +145,8 @@ const loadDailyKData = async () => {
   }
 }
 
-// 生成 K 线数据
-const generateKData = (dailyData, stock) => {
-  const currentPrice = parseFloat(stock.current_price) || 10
-  
-  return dailyData.map((d, index) => {
-    const totalReturn = parseFloat(d.total_return) || 0
-    const dailyReturn = parseFloat(d.daily_return) || 0
-    
-    // 计算股价
-    const priceRatio = 1 + (totalReturn / 100) * (index / dailyData.length)
-    const close = currentPrice * priceRatio
-    
-    // 根据日收益率生成 OHLC
-    const dailyRatio = dailyReturn / 100
-    const open = close / (1 + dailyRatio)
-    const low = Math.min(open, close) * (0.98 + Math.random() * 0.015)
-    const high = Math.max(open, close) * (1.015 + Math.random() * 0.015)
-    
-    // 生成成交量（与收益率正相关）
-    const baseVolume = 500000
-    const volume = Math.floor(baseVolume * (1 + Math.abs(dailyRatio) * 10) * (0.8 + Math.random() * 0.4))
-    
-    return [
-      d.date,      // 0: 日期
-      close,       // 1: 收盘价
-      open,        // 2: 开盘价
-      low,         // 3: 最低价
-      high,        // 4: 最高价
-      volume       // 5: 成交量
-    ]
-  })
-}
-
 // 渲染专业 K 线图表
-const renderKChart = (kData, indicators) => {
+const renderKChart = (dates, ohlcData, volumes, indicators) => {
   if (!kChartRef.value) return
   
   if (kChartInstance) {
@@ -254,10 +157,6 @@ const renderKChart = (kData, indicators) => {
     renderer: 'canvas',
     devicePixelRatio: window.devicePixelRatio || 1
   })
-  
-  const dates = kData.map(item => item[0])
-  const closes = kData.map(item => item[1])
-  const volumes = kData.map(item => item[5])
   
   // 专业金融配色
   const colorUp = '#ef232a'      // 红色（涨）
@@ -289,13 +188,14 @@ const renderKChart = (kData, indicators) => {
         fontSize: 12
       },
       formatter: (params) => {
-        const data = kData[params[0].dataIndex]
-        const date = data[0]
-        const open = data[2].toFixed(2)
-        const high = data[4].toFixed(2)
-        const low = data[3].toFixed(2)
-        const close = data[1].toFixed(2)
-        const volume = data[5].toLocaleString()
+        const dataIndex = params[0].dataIndex
+        const data = ohlcData[dataIndex]
+        const date = dates[dataIndex]
+        const open = data[0].toFixed(2)
+        const high = data[2].toFixed(2)
+        const low = data[1].toFixed(2)
+        const close = data[3].toFixed(2)
+        const volume = volumes[dataIndex].toLocaleString()
         
         return `
           <div style="font-weight:bold;margin-bottom:5px;">${date}</div>
@@ -450,12 +350,7 @@ const renderKChart = (kData, indicators) => {
       {
         name: 'K 线',
         type: 'candlestick',
-        data: kData.map(item => [
-          item[2], // open
-          item[3], // low
-          item[4], // high
-          item[1]  // close
-        ]),
+        data: ohlcData,
         itemStyle: {
           color: colorUp,
           color0: colorDown,
@@ -469,7 +364,7 @@ const renderKChart = (kData, indicators) => {
       {
         name: 'MA5',
         type: 'line',
-        data: indicators.ma5,
+        data: indicators.ma5Data,
         smooth: true,
         lineStyle: {
           width: 1,
@@ -482,7 +377,7 @@ const renderKChart = (kData, indicators) => {
       {
         name: 'MA10',
         type: 'line',
-        data: indicators.ma10,
+        data: indicators.ma10Data,
         smooth: true,
         lineStyle: {
           width: 1,
@@ -495,7 +390,7 @@ const renderKChart = (kData, indicators) => {
       {
         name: 'MA20',
         type: 'line',
-        data: indicators.ma20,
+        data: indicators.ma20Data,
         smooth: true,
         lineStyle: {
           width: 1,
@@ -511,8 +406,8 @@ const renderKChart = (kData, indicators) => {
         xAxisIndex: 1,
         yAxisIndex: 1,
         data: volumes.map((vol, idx) => {
-          const open = kData[idx][2]
-          const close = kData[idx][1]
+          const open = ohlcData[idx][0]
+          const close = ohlcData[idx][3]
           return {
             value: vol,
             itemStyle: {

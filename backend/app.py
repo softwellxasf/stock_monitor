@@ -1391,3 +1391,58 @@ def init_db():
 if __name__ == '__main__':
     init_db()
     app.run(host='0.0.0.0', port=5000, debug=True)
+
+@app.route('/api/daily-k', methods=['GET'])
+@jwt_required()
+def get_daily_k():
+    """获取日 K 线数据"""
+    from sqlalchemy import text
+    from models import Stock
+    
+    stock_code = request.args.get('stock_code')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    
+    if not stock_code or not start_date or not end_date:
+        return jsonify({
+            'success': False,
+            'message': '缺少参数：stock_code, start_date, end_date'
+        })
+    
+    # 查询日 K 数据
+    query = text("""
+        SELECT dp.date, dp.open, dp.high, dp.low, dp.close, dp.volume, 
+               dp.ma5, dp.ma10, dp.ma20, s.code as stock_code, s.name as stock_name
+        FROM daily_prices dp
+        JOIN stocks s ON dp.stock_id = s.id
+        WHERE s.code = :code 
+        AND dp.date BETWEEN :start AND :end
+        ORDER BY dp.date ASC
+    """)
+    
+    results = db.session.execute(query, {
+        'code': stock_code,
+        'start': start_date,
+        'end': end_date
+    }).fetchall()
+    
+    k_data = []
+    for r in results:
+        k_data.append({
+            'date': r[0].strftime('%Y-%m-%d') if r[0] else '',
+            'open': float(r[1]) if r[1] else 0,
+            'high': float(r[2]) if r[2] else 0,
+            'low': float(r[3]) if r[3] else 0,
+            'close': float(r[4]) if r[4] else 0,
+            'volume': int(r[5]) if r[5] else 0,
+            'ma5': float(r[6]) if r[6] else None,
+            'ma10': float(r[7]) if r[7] else None,
+            'ma20': float(r[8]) if r[8] else None,
+            'stock_code': r[9],
+            'stock_name': r[10]
+        })
+    
+    return jsonify({
+        'success': True,
+        'data': k_data
+    })
