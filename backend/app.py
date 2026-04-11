@@ -114,6 +114,22 @@ class Watchlist(db.Model):
     status = db.Column(db.String(20), default='active')
     remark = db.Column(db.String(200))
 
+class WatchlistHistory(db.Model):
+    """自选股历史估值记录表"""
+    __tablename__ = 'watchlist_history'
+    id = db.Column(db.Integer, primary_key=True)
+    stock_code = db.Column(db.String(20), nullable=False)
+    stock_name = db.Column(db.String(100), nullable=False)
+    target_price = db.Column(db.Numeric(10,2))
+    target_type = db.Column(db.String(20))
+    current_price = db.Column(db.Numeric(10,2))
+    pe_ttm = db.Column(db.Numeric(10,2))
+    pb = db.Column(db.Numeric(10,2))
+    dividend_yield = db.Column(db.Numeric(5,4))
+    status = db.Column(db.String(20), default='active')
+    remark = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime)
+
 # ============== 实盘数据模型 (复用 stockProject 数据库) ==============
 
 class Position(db.Model):
@@ -411,36 +427,40 @@ def get_watchlist_history():
     start_date = request.args.get('start_date', '')
     end_date = request.args.get('end_date', '')
 
-    # 构建查询 - 使用数据库实际字段名
+    # 构建查询 - 使用 watchlist_history 表
     query = db.session.query(
-        Watchlist.id,
-        Watchlist.stock_code,
-        Watchlist.stock_name,
-        Watchlist.target_price,
-        Watchlist.target_type,
-        Watchlist.current_price,
-        Watchlist.status,
-        Watchlist.remark
+        WatchlistHistory.id,
+        WatchlistHistory.stock_code,
+        WatchlistHistory.stock_name,
+        WatchlistHistory.target_price,
+        WatchlistHistory.target_type,
+        WatchlistHistory.current_price,
+        WatchlistHistory.pe_ttm,
+        WatchlistHistory.pb,
+        WatchlistHistory.dividend_yield,
+        WatchlistHistory.status,
+        WatchlistHistory.remark,
+        WatchlistHistory.created_at
     )
 
     # 条件过滤
     if keyword:
         query = query.filter(
             db.or_(
-                Watchlist.stock_code.like(f'%{keyword}%'),
-                Watchlist.stock_name.like(f'%{keyword}%')
+                WatchlistHistory.stock_code.like(f'%{keyword}%'),
+                WatchlistHistory.stock_name.like(f'%{keyword}%')
             )
         )
     if start_date:
-        query = query.filter(Watchlist.status >= start_date)
+        query = query.filter(WatchlistHistory.created_at >= start_date)
     if end_date:
-        query = query.filter(Watchlist.status <= end_date)
+        query = query.filter(WatchlistHistory.created_at <= end_date)
 
     # 总数
     total = query.count()
 
     # 分页排序
-    records = query.order_by(Watchlist.id.desc()).offset(
+    records = query.order_by(WatchlistHistory.created_at.desc()).offset(
         (page - 1) * page_size
     ).limit(page_size).all()
 
@@ -453,11 +473,12 @@ def get_watchlist_history():
             'target_price': float(r.target_price) if r.target_price else 0,
             'target_type': r.target_type or '',
             'current_price': float(r.current_price) if r.current_price else 0,
-            'pe_ttm': 0,
-            'pb': 0,
-            'dividend_yield': 0,
+            'pe_ttm': float(r.pe_ttm) if r.pe_ttm else 0,
+            'pb': float(r.pb) if r.pb else 0,
+            'dividend_yield': float(r.dividend_yield) if r.dividend_yield else 0,
             'status': r.status,
-            'remark': r.remark or ''
+            'remark': r.remark or '',
+            'created_at': r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else None
         })
 
     return jsonify({

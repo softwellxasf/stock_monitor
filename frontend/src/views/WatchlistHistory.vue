@@ -37,6 +37,7 @@
 
       <!-- 历史估值表格 -->
       <el-table :data="records" stripe style="width: 100%" v-loading="loading">
+        <el-table-column prop="created_at" label="时间" width="160" />
         <el-table-column prop="stock_code" label="代码" width="120" />
         <el-table-column prop="stock_name" label="名称" width="100" />
         <el-table-column prop="target_price" label="目标价" width="100">
@@ -49,11 +50,6 @@
             <el-tag :type="row.target_type === 'high' ? 'danger' : 'success'" size="small">
               {{ row.target_type === 'high' ? '高估' : '低估' }}
             </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="current_price" label="现价" width="100">
-          <template #default="{ row }">
-            <span>￥{{ row.current_price?.toFixed(2) }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="pe_ttm" label="PE(TTM)" width="90">
