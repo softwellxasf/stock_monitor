@@ -42,29 +42,37 @@
         </el-button>
       </div>
 
-      <!-- K 线图表 -->
-      <div ref="kChartRef" class="k-chart" v-loading="loading"></div>
+      <!-- K 线图表容器 -->
+      <div ref="chartContainer" class="chart-container" v-loading="loading"></div>
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { sim, dailyK } from '../api'
 import { ElMessage } from 'element-plus'
-import * as echarts from 'echarts'
+import { createChart, ColorType, CrosshairMode } from 'lightweight-charts'
 
 const loading = ref(false)
 const stockList = ref([])
-const kChartRef = ref(null)
+const chartContainer = ref(null)
 const currentStock = ref(null)
 const currentPrice = ref(0)
-let kChartInstance = null
+const tradeRecords = ref([])
+
+let chart = null
+let candlestickSeries = null
+let volumeSeries = null
+let ma5Series = null
+let ma10Series = null
+let ma20Series = null
+let markers = []
 
 const defaultDateRange = computed(() => {
   const end = new Date()
   const start = new Date()
-  start.setDate(start.getDate() - 30)  // 默认最近 30 天
+  start.setDate(start.getDate() - 180)
   return [start.toISOString().split('T')[0], end.toISOString().split('T')[0]]
 })
 
@@ -72,7 +80,124 @@ const searchForm = ref({
   stockCode: '',
   dateRange: []
 })
-const tradeRecords = ref([])  // 交易记录
+
+// 初始化图表
+const initChart = () => {
+  if (!chartContainer.value) return
+  
+  // 销毁旧图表
+  if (chart) {
+    chart.remove()
+  }
+  
+  // 创建新图表（TradingView 风格）
+  chart = createChart(chartContainer.value, {
+    width: chartContainer.value.clientWidth,
+    height: 600,
+    layout: {
+      background: { type: ColorType.Solid, color: '#FFFFFF' },
+      textColor: '#333333',
+    },
+    grid: {
+      vertLines: { color: '#f0f0f0' },
+      horzLines: { color: '#f0f0f0' },
+    },
+    crosshair: {
+      mode: CrosshairMode.Normal,
+      vertLine: {
+        labelBackgroundColor: '#2962FF',
+      },
+      horzLine: {
+        labelBackgroundColor: '#2962FF',
+      },
+    },
+    rightPriceScale: {
+      borderColor: '#e0e0e0',
+      scaleMargins: {
+        top: 0.2,
+        bottom: 0.2,
+      },
+    },
+    timeScale: {
+      borderColor: '#e0e0e0',
+      timeVisible: true,
+      secondsVisible: false,
+    },
+  })
+  
+  // 添加 K 线系列
+  candlestickSeries = chart.addCandlestickSeries({
+    upColor: '#FF0000',
+    downColor: '#00CC00',
+    borderUpColor: '#FF0000',
+    borderDownColor: '#00CC00',
+    wickUpColor: '#FF0000',
+    wickDownColor: '#00CC00',
+  })
+  
+  // 添加成交量系列
+  volumeSeries = chart.addHistogramSeries({
+    color: '#26a69a',
+    priceFormat: {
+      type: 'volume',
+    },
+    priceScaleId: '',
+    scaleMargins: {
+      top: 0.85,
+      bottom: 0,
+    },
+  })
+  
+  // 添加 MA5 均线
+  ma5Series = chart.addLineSeries({
+    color: '#FFFFFF',
+    lineWidth: 2,
+    title: 'MA5',
+  })
+  
+  // 添加 MA10 均线
+  ma10Series = chart.addLineSeries({
+    color: '#FFD700',
+    lineWidth: 2,
+    title: 'MA10',
+  })
+  
+  // 添加 MA20 均线
+  ma20Series = chart.addLineSeries({
+    color: '#00FFFF',
+    lineWidth: 2,
+    title: 'MA20',
+  })
+  
+  // 自适应窗口大小
+  window.addEventListener('resize', handleResize)
+}
+
+// 处理窗口大小变化
+const handleResize = () => {
+  if (chart && chartContainer.value) {
+    chart.applyOptions({
+      width: chartContainer.value.clientWidth,
+    })
+  }
+}
+
+// 计算 MA 均线
+const calculateMA = (data, period) => {
+  const ma = []
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) continue
+    let sum = 0
+    for (let j = 0; j < period; j++) {
+      sum += data[i - j].close
+    }
+    ma.push({
+      time: data[i].time,
+      value: sum / period,
+    })
+  }
+  return ma
+}
 
 // 加载股票列表
 const loadStockList = async () => {
@@ -103,16 +228,15 @@ const onStockChange = (code) => {
   loadDailyKData()
 }
 
-// 加载日 K 数据（使用真实数据）
+// 加载日 K 数据
 const loadDailyKData = async () => {
   if (!searchForm.value.stockCode) return
   
   loading.value = true
   try {
     const dateRange = searchForm.value.dateRange || defaultDateRange.value
-    const start = dateRange[0]
-    const end = dateRange[1]
-    console.log('默认日期范围:', defaultDateRange.value)
+    const [start, end] = dateRange
+    
     console.log('查询日期范围:', start, end)
     console.log('股票代码:', searchForm.value.stockCode)
     
@@ -133,26 +257,38 @@ const loadDailyKData = async () => {
     if (res.data.success) {
       const kData = res.data.data
       
-      if (kData.length === 0) {
-        ElMessage.warning('暂无该股票日 K 数据')
-        loading.value = false
-        return
-      }
-      
       // 准备图表数据
-      const dates = kData.map(item => item.date)
-      const ohlcData = kData.map(item => [
-        item.open,    // 开盘价
-        item.close,   // 收盘价
-        item.low,     // 最低价
-        item.high     // 最高价
-      ])
-      const volumes = kData.map(item => item.volume)
-      const ma5Data = kData.map(item => item.ma5)
-      const ma10Data = kData.map(item => item.ma10)
-      const ma20Data = kData.map(item => item.ma20)
+      const candleData = kData.map(item => ({
+        time: item.date,
+        open: item.open,
+        high: item.high,
+        low: item.low,
+        close: item.close,
+      }))
       
-      renderKChart(dates, ohlcData, volumes, { ma5Data, ma10Data, ma20Data })
+      const volumeData = kData.map(item => ({
+        time: item.date,
+        value: item.volume,
+        color: item.close >= item.open ? '#FF0000' : '#00CC00',
+      }))
+      
+      // 计算均线
+      const ma5Data = calculateMA(candleData, 5)
+      const ma10Data = calculateMA(candleData, 10)
+      const ma20Data = calculateMA(candleData, 20)
+      
+      // 更新图表
+      candlestickSeries.setData(candleData)
+      volumeSeries.setData(volumeData)
+      ma5Series.setData(ma5Data)
+      ma10Series.setData(ma10Data)
+      ma20Series.setData(ma20Data)
+      
+      // 添加交易标记
+      updateMarkers(candleData)
+      
+      console.log('K 线数据:', candleData.length, '条')
+      console.log('均线数据: MA5=' + ma5Data.length + ', MA10=' + ma10Data.length + ', MA20=' + ma20Data.length)
     }
   } catch (error) {
     console.error('加载日 K 数据失败:', error)
@@ -162,546 +298,80 @@ const loadDailyKData = async () => {
   }
 }
 
-// 渲染专业 K 线图表（带交易标记）
-const renderKChart = (dates, ohlcData, volumes, indicators) => {
-  // 准备交易标记数据
-  const buyMarks = []  // 底仓买入（黄色向上箭头）
-  const sellMarks = []  // 底仓卖出（红色向下箭头）
-  const tBuyMarks = []  // 做 T 买入（蓝色加号）
-  const tSellMarks = []  // 做 T 卖出（紫色减号）
+// 更新交易标记
+const updateMarkers = (candleData) => {
+  markers = []
   
   tradeRecords.value.forEach(trade => {
     const tradeDate = trade.trade_date?.split(' ')[0] || trade.trade_date
-    const dataIndex = dates.indexOf(tradeDate)
+    const dataIndex = candleData.findIndex(d => d.time === tradeDate)
     if (dataIndex === -1) return
     
+    const candle = candleData[dataIndex]
     const isTTrade = trade.remark?.includes('T') || trade.remark?.includes('做 T')
-    const high = ohlcData[dataIndex][2]
-    const low = ohlcData[dataIndex][3]
     
     if (trade.direction === 'BUY') {
       if (isTTrade) {
-        // 做 T 买入：橙色小圆点 + T 字
-        tBuyMarks.push({
-          xAxis: dataIndex,
-          yAxis: low * 0.96,
-          value: 'T',
-          itemStyle: { color: '#FF9900' }  // 橙色
+        // 做 T 买入：橙色小圆点
+        markers.push({
+          time: tradeDate,
+          position: 'belowBar',
+          color: '#FF9900',
+          shape: 'circle',
+          text: 'T',
+          size: 0.5,
         })
       } else {
-        // 底仓买入：红色圆形背景 + 白色 B 字
-        buyMarks.push({
-          xAxis: dataIndex,
-          yAxis: low * 0.94,
-          value: 'B',
-          itemStyle: { 
-            color: '#FF4444',  // 红色背景
-            textBorderColor: '#FFFFFF',  // 白色边框
-            textBorderWidth: 1
-          }
+        // 底仓买入：红色圆形 B
+        markers.push({
+          time: tradeDate,
+          position: 'belowBar',
+          color: '#FF4444',
+          shape: 'circle',
+          text: 'B',
+          size: 1,
         })
       }
     } else if (trade.direction === 'SELL') {
       if (isTTrade) {
-        // 做 T 卖出：绿色小圆点 + T 字
-        tSellMarks.push({
-          xAxis: dataIndex,
-          yAxis: high * 1.04,
-          value: 'T',
-          itemStyle: { color: '#00CC00' }  // 绿色
+        // 做 T 卖出：绿色小圆点
+        markers.push({
+          time: tradeDate,
+          position: 'aboveBar',
+          color: '#00CC00',
+          shape: 'circle',
+          text: 'T',
+          size: 0.5,
         })
       } else {
-        // 底仓卖出：蓝色圆形背景 + 白色 S 字
-        sellMarks.push({
-          xAxis: dataIndex,
-          yAxis: high * 1.06,
-          value: 'S',
-          itemStyle: { 
-            color: '#4488FF',  // 蓝色背景
-            textBorderColor: '#FFFFFF',  // 白色边框
-            textBorderWidth: 1
-          }
+        // 底仓卖出：蓝色圆形 S
+        markers.push({
+          time: tradeDate,
+          position: 'aboveBar',
+          color: '#4488FF',
+          shape: 'circle',
+          text: 'S',
+          size: 1,
         })
       }
     }
   })
-  if (!kChartRef.value) return
   
-  if (kChartInstance) {
-    kChartInstance.dispose()
-  }
-  
-  kChartInstance = echarts.init(kChartRef.value, 'light', {
-    renderer: 'canvas',
-    devicePixelRatio: window.devicePixelRatio || 1
-  })
-  
-  // 专业金融配色
-  const colorUp = '#FF0000'      // 红色（涨）
-  const colorDown = '#00CC00'    // 绿色（跌）
-  const colorMa5 = '#FFFFFF'     // 金黄色
-  const colorMa10 = '#FFD700'    // 青色
-  const colorMa20 = '#00FFFF'    // 粉色
-  
-  const option = {
-    backgroundColor: '#ffffff',
-    animation: false,
-    title: {
-      text: `${searchForm.value.stockCode} 日 K 线图`,
-      left: 'center',
-      textStyle: {
-        fontSize: 14,
-        fontWeight: 'bold'
-      }
-    },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'cross'
-      },
-      borderWidth: 3,
-      borderColor: '#ccc',
-      padding: 10,
-      textStyle: {
-        fontSize: 12
-      },
-      formatter: (params) => {
-        const dataIndex = params[0].dataIndex
-        const data = ohlcData[dataIndex]
-        const date = dates[dataIndex]
-        const open = data[0].toFixed(2)
-        const high = data[2].toFixed(2)
-        const low = data[1].toFixed(2)
-        const close = data[3].toFixed(2)
-        const volume = volumes[dataIndex].toLocaleString()
-        
-        return `
-          <div style="font-weight:bold;margin-bottom:5px;">${date}</div>
-          <div>开盘：${open}</div>
-          <div>最高：${high}</div>
-          <div>最低：${low}</div>
-          <div>收盘：${close}</div>
-          <div>成交量：${volume}</div>
-        `
-      }
-    },
-    legend: {
-      data: ['K 线', 'MA5', 'MA10', 'MA20', '成交量', '底仓买入', '底仓卖出', '做 T 买入', '做 T 卖出'],
-      top: 30,
-      textStyle: {
-        fontSize: 10
-      }
-    },
-    grid: [
-      {
-        left: '8%',
-        right: '8%',
-        height: '55%',
-        top: '12%'
-      },
-      {
-        left: '8%',
-        right: '8%',
-        top: '70%',
-        height: '12%'
-      }
-    ],
-    axisPointer: {
-      link: [
-        { xAxisIndex: [0, 1] }
-      ]
-    },
-    xAxis: [
-      {
-        type: 'category',
-        data: dates,
-        scale: true,
-        boundaryGap: false,
-        axisLine: {
-          lineStyle: {
-            color: '#ccc'
-          }
-        },
-        axisLabel: {
-          fontSize: 10,
-          rotate: 0,
-          interval: Math.floor(dates.length / 10)
-        },
-        splitLine: {
-          show: false
-        },
-        min: 'dataMin',
-        max: 'dataMax'
-      },
-      {
-        type: 'category',
-        gridIndex: 1,
-        data: dates,
-        axisLabel: {
-          show: false
-        },
-        axisLine: {
-          lineStyle: {
-            color: '#ccc'
-          }
-        },
-        splitLine: {
-          show: false
-        }
-      }
-    ],
-    yAxis: [
-      {
-        scale: true,
-        name: '股价',
-        nameLocation: 'middle',
-        nameGap: 50,
-        position: 'right',
-        axisLine: {
-          lineStyle: {
-            color: '#ccc'
-          }
-        },
-        axisLabel: {
-          fontSize: 10,
-          formatter: (value) => value.toFixed(2)
-        },
-        splitLine: {
-          lineStyle: {
-            color: '#f0f0f0',
-            type: 'dashed'
-          }
-        }
-      },
-      {
-        scale: true,
-        gridIndex: 1,
-        name: '成交量',
-        nameLocation: 'middle',
-        nameGap: 40,
-        position: 'right',
-        axisLine: {
-          lineStyle: {
-            color: '#ccc'
-          }
-        },
-        axisLabel: {
-          fontSize: 10,
-          formatter: (value) => {
-            if (value >= 1000000) {
-              return (value / 1000000).toFixed(1) + 'M'
-            } else if (value >= 1000) {
-              return (value / 1000).toFixed(0) + 'K'
-            }
-            return value.toString()
-          }
-        },
-        splitLine: {
-          show: false
-        }
-      }
-    ],
-    dataZoom: [
-      {
-        type: 'inside',
-        xAxisIndex: [0, 1],
-        start: 50,
-        end: 100,
-        minValueSpan: 10
-      },
-      {
-        show: true,
-        xAxisIndex: [0, 1],
-        type: 'slider',
-        top: '95%',
-        height: 20,
-        start: 50,
-        end: 100,
-        borderColor: '#ddd',
-        fillerColor: 'rgba(0,0,0,0.1)',
-        handleStyle: {
-          color: '#999'
-        }
-      }
-    ],
-    series: [
-      {
-        name: 'K 线',
-        type: 'candlestick',
-        data: ohlcData,
-        itemStyle: {
-          color: colorUp,
-          color0: colorDown,
-          borderColor: colorUp,
-          borderColor0: colorDown,
-          borderWidth: 2
-        },
-        barMaxWidth: 20,
-        barMinWidth: 8,
-        zlevel: 1
-      },
-      {
-        name: 'MA5',
-        type: 'line',
-        data: indicators.ma5Data,
-        smooth: true,
-        lineStyle: {
-          width: 1.5,  // 加粗
-          color: colorMa5,
-          type: 'solid',
-          shadowColor: 'rgba(0,0,0,0.3)',  // 阴影
-          shadowBlur: 2
-        },
-        symbol: 'none',
-        zlevel: 2
-      },
-      {
-        name: 'MA10',
-        type: 'line',
-        data: indicators.ma10Data,
-        smooth: true,
-        lineStyle: {
-          width: 1.5,  // 加粗
-          color: colorMa10,
-          type: 'solid',
-          shadowColor: 'rgba(0,0,0,0.3)',
-          shadowBlur: 2
-        },
-        symbol: 'none',
-        zlevel: 2
-      },
-      {
-        name: 'MA20',
-        type: 'line',
-        data: indicators.ma20Data,
-        smooth: true,
-        lineStyle: {
-          width: 1.5,  // 加粗
-          color: colorMa20,
-          type: 'solid',
-          shadowColor: 'rgba(0,0,0,0.3)',
-          shadowBlur: 2
-        },
-        symbol: 'none',
-        zlevel: 2
-      },
-      {
-        name: '成交量',
-        type: 'bar',
-        xAxisIndex: 1,
-        yAxisIndex: 1,
-        data: volumes.map((vol, idx) => {
-          const open = ohlcData[idx][0]
-          const close = ohlcData[idx][3]
-          return {
-            value: vol,
-            itemStyle: {
-              color: close >= open ? colorUp : colorDown,
-              opacity: 0.8
-            }
-          }
-        }),
-        barMaxWidth: 25,
-        zlevel: 1
-      },
-      {
-        name: '底仓买入',
-        type: 'custom',
-        xAxisIndex: 0,
-        yAxisIndex: 0,
-        data: buyMarks,
-        renderItem: (params, api) => {
-          const point = api.coord([api.value(0), api.value(1)])
-          return {
-            type: 'circle',
-            shape: { r: 10 },
-            position: [point[0], point[1]],
-            style: {
-              fill: '#FF4444'
-            }
-          }
-        },
-        zlevel: 3
-      },
-      {
-        name: '底仓买入文字',
-        type: 'custom',
-        xAxisIndex: 0,
-        yAxisIndex: 0,
-        data: buyMarks,
-        renderItem: (params, api) => {
-          const point = api.coord([api.value(0), api.value(1)])
-          return {
-            type: 'text',
-            style: {
-              text: 'B',
-              fill: '#FFFFFF',
-              fontSize: 12,
-              fontWeight: 'bold'
-            },
-            position: [point[0], point[1] - 4]
-          }
-        },
-        zlevel: 4
-      },
-      {
-        name: '底仓卖出',
-        type: 'custom',
-        xAxisIndex: 0,
-        yAxisIndex: 0,
-        data: sellMarks,
-        renderItem: (params, api) => {
-          const point = api.coord([api.value(0), api.value(1)])
-          return {
-            type: 'circle',
-            shape: { r: 10 },
-            position: [point[0], point[1]],
-            style: {
-              fill: '#4488FF'
-            }
-          }
-        },
-        zlevel: 3
-      },
-      {
-        name: '底仓卖出文字',
-        type: 'custom',
-        xAxisIndex: 0,
-        yAxisIndex: 0,
-        data: sellMarks,
-        renderItem: (params, api) => {
-          const point = api.coord([api.value(0), api.value(1)])
-          return {
-            type: 'text',
-            style: {
-              text: 'S',
-              fill: '#FFFFFF',
-              fontSize: 12,
-              fontWeight: 'bold'
-            },
-            position: [point[0], point[1] - 4]
-          }
-        },
-        zlevel: 4
-      },
-      {
-        name: '做 T 买入',
-        type: 'custom',
-        xAxisIndex: 0,
-        yAxisIndex: 0,
-        data: tBuyMarks,
-        renderItem: (params, api) => {
-          const point = api.coord([api.value(0), api.value(1)])
-          return {
-            type: 'circle',
-            shape: { r: 6 },
-            position: [point[0], point[1]],
-            style: {
-              fill: '#FF9900'
-            }
-          }
-        },
-        zlevel: 3
-      },
-      {
-        name: '做 T 买入文字',
-        type: 'custom',
-        xAxisIndex: 0,
-        yAxisIndex: 0,
-        data: tBuyMarks,
-        renderItem: (params, api) => {
-          const point = api.coord([api.value(0), api.value(1)])
-          return {
-            type: 'text',
-            style: {
-              text: 'T',
-              fill: '#FFFFFF',
-              fontSize: 9,
-              fontWeight: 'bold'
-            },
-            position: [point[0], point[1] - 3]
-          }
-        },
-        zlevel: 4
-      },
-      {
-        name: '做 T 卖出',
-        type: 'custom',
-        xAxisIndex: 0,
-        yAxisIndex: 0,
-        data: tSellMarks,
-        renderItem: (params, api) => {
-          const point = api.coord([api.value(0), api.value(1)])
-          return {
-            type: 'circle',
-            shape: { r: 6 },
-            position: [point[0], point[1]],
-            style: {
-              fill: '#00CC00'
-            }
-          }
-        },
-        zlevel: 3
-      },
-      {
-        name: '做 T 卖出文字',
-        type: 'custom',
-        xAxisIndex: 0,
-        yAxisIndex: 0,
-        data: tSellMarks,
-        renderItem: (params, api) => {
-          const point = api.coord([api.value(0), api.value(1)])
-          return {
-            type: 'text',
-            style: {
-              text: 'T',
-              fill: '#FFFFFF',
-              fontSize: 9,
-              fontWeight: 'bold'
-            },
-            position: [point[0], point[1] - 3]
-          }
-        },
-        zlevel: 4
-      }
-    ]
-  }
-  
-  console.log('=== K 线图配置 ===')
-  console.log('MA5 颜色:', colorMa5)
-  console.log('MA10 颜色:', colorMa10)
-  console.log('MA20 颜色:', colorMa20)
-  console.log('底仓买入标记:', buyMarks.length)
-  console.log('底仓卖出标记:', sellMarks.length)
-  console.log('做 T 买入标记:', tBuyMarks.length)
-  console.log('做 T 卖出标记:', tSellMarks.length)
-  
-  console.log('交易标记统计:')
-  console.log('  底仓买入:', buyMarks.length)
-  console.log('  底仓卖出:', sellMarks.length)
-  console.log('  做 T 买入:', tBuyMarks.length)
-  console.log('  做 T 卖出:', tSellMarks.length)
-  
-  kChartInstance.setOption(option)
+  candlestickSeries.setMarkers(markers)
+  console.log('交易标记:', markers.length, '个')
 }
 
-// 窗口大小变化时重新渲染图表
-window.addEventListener('resize', () => {
-  if (kChartInstance) {
-    kChartInstance.resize()
+// 清理资源
+onUnmounted(() => {
+  if (chart) {
+    chart.remove()
+    window.removeEventListener('resize', handleResize)
   }
 })
 
 onMounted(() => {
+  initChart()
   loadStockList()
-  // 设置默认日期范围（最近 6 个月/180 天）
-  const end = new Date()
-  const start = new Date()
-  start.setDate(start.getDate() - 180)
-  searchForm.value.dateRange = [
-    start.toISOString().split('T')[0],
-    end.toISOString().split('T')[0]
-  ]
 })
 </script>
 
@@ -730,8 +400,8 @@ onMounted(() => {
   align-items: center;
 }
 
-.k-chart {
+.chart-container {
   width: 100%;
-  height: 650px;
+  height: 600px;
 }
 </style>
