@@ -109,7 +109,10 @@ const loadDailyKData = async () => {
   
   loading.value = true
   try {
-    const [start, end] = searchForm.value.dateRange || defaultDateRange.value
+    const dateRange = searchForm.value.dateRange || defaultDateRange.value
+    const start = dateRange[0]
+    const end = dateRange[1]
+    console.log('查询日期范围:', start, end)
     
     // 获取真实日 K 数据
     const res = await dailyK.getData(searchForm.value.stockCode, start, end)
