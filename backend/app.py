@@ -234,6 +234,26 @@ def get_sim_account():
         }
     })
 
+@app.route('/api/actual-account', methods=['GET'])
+@jwt_required()
+def get_actual_account():
+    """获取实盘账户信息"""
+    from sqlalchemy import text
+    account = db.session.execute(text("SELECT * FROM actual_account WHERE id = 1")).fetchone()
+    if not account:
+        return jsonify({'success': False, 'message': '实盘账户不存在'}), 404
+    
+    return jsonify({
+        'success': True,
+        'data': {
+            'total_capital': float(account.total_capital),
+            'cash': float(account.cash),
+            'total_value': float(account.total_value),
+            'total_cost_paid': float(account.total_cost_paid),
+            'position_value': float(account.total_value) - float(account.cash)
+        }
+    })
+
 @app.route('/api/sim-positions', methods=['GET'])
 @jwt_required()
 def get_sim_positions():
