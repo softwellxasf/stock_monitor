@@ -46,6 +46,10 @@
               <el-icon><Briefcase /></el-icon>
               <span>实盘</span>
             </template>
+            <el-menu-item index="/real">
+              <el-icon><DataBoard /></el-icon>
+              <template #title>实盘概览</template>
+            </el-menu-item>
             <el-menu-item index="/real/positions">
               <el-icon><Briefcase /></el-icon>
               <template #title>实盘持仓</template>
@@ -133,6 +137,7 @@ const pageTitle = computed(() => {
     '/sim/positions': '模拟持仓',
     '/sim/trades': '模拟交易记录',
     '/sim/analysis': '模拟收益分析',
+    '/real': '实盘概览',
     '/real/positions': '实盘持仓',
     '/real/trades': '交易记录',
     '/real/analysis': '收益分析',

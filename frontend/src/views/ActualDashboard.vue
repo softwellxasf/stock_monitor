@@ -251,7 +251,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { sim } from '../api'
+import { actual } from '../api'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
 
