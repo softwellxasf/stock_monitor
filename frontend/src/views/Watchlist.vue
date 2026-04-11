@@ -1,35 +1,41 @@
 <template>
   <div class="watchlist">
-    <el-container>
-      <el-header>
-        <h2>⭐ 自选表</h2>
-        <div class="header-actions">
-          <el-button @click="$router.push('/')">返回</el-button>
+    <el-card shadow="never">
+      <template #header>
+        <div class="card-header">
+          <span>⭐ 自选表</span>
         </div>
-      </el-header>
-      <el-main>
-        <!-- 搜索条件 -->
-        <el-card class="search-card" shadow="never">
-          <el-form :inline="true" :model="searchForm">
-            <el-form-item label="代码/名称">
-              <el-input v-model="searchForm.keyword" placeholder="输入代码或名称" clearable style="width: 200px" />
-            </el-form-item>
-            <el-form-item label="状态">
-              <el-select v-model="searchForm.status" placeholder="全部" clearable style="width: 120px">
-                <el-option label="活跃" value="active" />
-                <el-option label=" inactive" value="inactive" />
-              </el-select>
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="handleSearch">搜索</el-button>
-              <el-button @click="resetSearch">重置</el-button>
-            </el-form-item>
-          </el-form>
-        </el-card>
-        
-        <!-- 数据表格 -->
-        <el-card style="margin-top: 15px">
-          <el-table :data="paginatedList" stripe style="width: 100%" v-loading="loading">
+      </template>
+
+      <!-- 搜索条件 -->
+      <div class="search-bar">
+        <el-input
+          v-model="searchForm.keyword"
+          placeholder="搜索股票代码/名称"
+          clearable
+          style="width: 200px"
+          @keyup.enter="handleSearch"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+        <el-select
+          v-model="searchForm.status"
+          placeholder="状态"
+          clearable
+          style="width: 120px"
+          @change="handleSearch"
+        >
+          <el-option label="活跃" value="active" />
+          <el-option label="停用" value="inactive" />
+        </el-select>
+        <el-button type="primary" @click="handleSearch">搜索</el-button>
+        <el-button @click="resetSearch">重置</el-button>
+      </div>
+
+      <!-- 自选表表格 -->
+      <el-table :data="paginatedList" stripe style="width: 100%" v-loading="loading">
             <el-table-column prop="stock_code" label="代码" width="120" sortable />
             <el-table-column prop="stock_name" label="名称" width="120" />
             <el-table-column prop="target_price" label="目标价" width="100" sortable>
@@ -66,8 +72,8 @@
             />
           </div>
         </el-card>
-      </el-main>
-    </el-container>
+      </div>
+    </el-card>
   </div>
 </template>
 
