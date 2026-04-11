@@ -73,6 +73,11 @@
             <el-icon><Star /></el-icon>
             <template #title>自选列表</template>
           </el-menu-item>
+
+          <el-menu-item index="/watchlist-history">
+            <el-icon><DataAnalysis /></el-icon>
+            <template #title>历史估值</template>
+          </el-menu-item>
         </el-menu>
         
         <!-- 收缩按钮 -->
@@ -141,7 +146,8 @@ const pageTitle = computed(() => {
     '/real/positions': '实盘持仓',
     '/real/trades': '交易记录',
     '/real/analysis': '收益分析',
-    '/watchlist': '自选列表'
+    '/watchlist': '自选列表',
+    '/watchlist-history': '历史估值'
   }
   return titles[route.path] || ''
 })

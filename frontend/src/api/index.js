@@ -35,7 +35,8 @@ export const sim = {
 }
 
 export const watchlist = {
-  getList: () => api.get('/watchlist')
+  getList: () => api.get('/watchlist'),
+  getHistory: (params) => api.get('/watchlist-history', { params })
 }
 
 export const actual = {

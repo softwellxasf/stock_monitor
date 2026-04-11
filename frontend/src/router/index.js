@@ -71,6 +71,12 @@ const routes = [
         name: 'Watchlist',
         component: () => import('../views/Watchlist.vue'),
         meta: { requiresAuth: true, title: '自选列表' }
+      },
+      {
+        path: 'watchlist-history',
+        name: 'WatchlistHistory',
+        component: () => import('../views/WatchlistHistory.vue'),
+        meta: { requiresAuth: true, title: '历史估值' }
       }
     ]
   }

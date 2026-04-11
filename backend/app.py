@@ -400,6 +400,74 @@ def get_watchlist():
 
     return jsonify({'success': True, 'data': result})
 
+@app.route('/api/watchlist-history', methods=['GET'])
+@jwt_required()
+def get_watchlist_history():
+    """获取自选股历史估值记录（支持搜索和分页）"""
+    # 获取查询参数
+    page = request.args.get('page', 1, type=int)
+    page_size = request.args.get('page_size', 20, type=int)
+    keyword = request.args.get('keyword', '')
+    start_date = request.args.get('start_date', '')
+    end_date = request.args.get('end_date', '')
+
+    # 构建查询 - 使用数据库实际字段名
+    query = db.session.query(
+        Watchlist.id,
+        Watchlist.stock_code,
+        Watchlist.stock_name,
+        Watchlist.target_price,
+        Watchlist.target_type,
+        Watchlist.current_price,
+        Watchlist.status,
+        Watchlist.remark
+    )
+
+    # 条件过滤
+    if keyword:
+        query = query.filter(
+            db.or_(
+                Watchlist.stock_code.like(f'%{keyword}%'),
+                Watchlist.stock_name.like(f'%{keyword}%')
+            )
+        )
+    if start_date:
+        query = query.filter(Watchlist.status >= start_date)
+    if end_date:
+        query = query.filter(Watchlist.status <= end_date)
+
+    # 总数
+    total = query.count()
+
+    # 分页排序
+    records = query.order_by(Watchlist.id.desc()).offset(
+        (page - 1) * page_size
+    ).limit(page_size).all()
+
+    result = []
+    for r in records:
+        result.append({
+            'id': r.id,
+            'stock_code': r.stock_code,
+            'stock_name': r.stock_name,
+            'target_price': float(r.target_price) if r.target_price else 0,
+            'target_type': r.target_type or '',
+            'current_price': float(r.current_price) if r.current_price else 0,
+            'pe_ttm': 0,
+            'pb': 0,
+            'dividend_yield': 0,
+            'status': r.status,
+            'remark': r.remark or ''
+        })
+
+    return jsonify({
+        'success': True,
+        'data': result,
+        'total': total,
+        'page': page,
+        'page_size': page_size
+    })
+
 # ============== 实盘 API 路由 ==============
 
 @app.route('/api/actual-positions', methods=['GET'])
