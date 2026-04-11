@@ -583,10 +583,11 @@ def get_actual_stats():
     # 收益率
     profit_pct = ((total_market_value - total_cost) / total_cost * 100) if total_cost > 0 else 0
 
-    # 计算当前仓位比例
-    account = SimAccount.query.filter_by(id=1).first()
-    if account and account.total_value > 0:
-        position_ratio = (total_market_value / float(account.total_value) * 100)
+    # 计算当前仓位比例（从 actual_account 表）
+    from sqlalchemy import text
+    account = db.session.execute(text("SELECT total_value FROM actual_account WHERE id = 1")).fetchone()
+    if account and account[0] > 0:
+        position_ratio = (total_market_value / float(account[0]) * 100)
     else:
         position_ratio = 0
     
@@ -845,10 +846,11 @@ def get_sim_stats():
         total_profit = 0
         profit_pct = 0
 
-    # 计算当前仓位比例
-    account = SimAccount.query.filter_by(id=1).first()
-    if account and account.total_value > 0:
-        position_ratio = (total_market_value / float(account.total_value) * 100)
+    # 计算当前仓位比例（从 actual_account 表）
+    from sqlalchemy import text
+    account = db.session.execute(text("SELECT total_value FROM actual_account WHERE id = 1")).fetchone()
+    if account and account[0] > 0:
+        position_ratio = (total_market_value / float(account[0]) * 100)
     else:
         position_ratio = 0
     

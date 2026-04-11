@@ -73,14 +73,14 @@
         <el-col :span="6">
           <div class="overview-item">
             <div class="overview-label">累计收益</div>
-            <div class="overview-value" :class="stats.total_capital > 0 ? (stats.total_value - stats.total_capital >= 0 ? 'profit' : 'loss') : ''" v-if="stats.total_capital > 0">¥{{ (stats.total_value - stats.total_capital).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</div>
+            <div class="overview-value" :class="stats.total_profit >= 0 ? 'profit' : 'loss'" v-if="stats.total_capital > 0">¥{{ stats.total_profit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</div>
             <div class="overview-value" v-else>-</div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="overview-item">
             <div class="overview-label">收益率</div>
-            <div class="overview-value" :class="stats.total_capital > 0 ? (stats.total_value - stats.total_capital >= 0 ? 'profit' : 'loss') : ''" v-if="stats.total_capital > 0">{{ ((stats.total_value - stats.total_capital) / stats.total_capital * 100).toFixed(2) }}%</div>
+            <div class="overview-value" :class="stats.profit_pct >= 0 ? 'profit' : 'loss'" v-if="stats.total_capital > 0">{{ stats.profit_pct.toFixed(2) }}%</div>
             <div class="overview-value" v-else>-</div>
           </div>
         </el-col>
@@ -260,6 +260,8 @@ const stats = ref({
   cash: 0,
   position_count: 0,
   position_ratio: 0,
+  total_profit: 0,
+  profit_pct: 0,
   watchlist_count: 0,
   total_capital: 0
 })
@@ -322,6 +324,8 @@ onMounted(async () => {
       total_capital: accountData.total_capital || 0,
       position_count: statsData.position_count || 0,
       position_ratio: statsData.position_ratio || 0,
+      total_profit: statsData.total_profit || 0,
+      profit_pct: statsData.profit_pct || 0,
       watchlist_count: watchlistData.length || 0
     }
 
