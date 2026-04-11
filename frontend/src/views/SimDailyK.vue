@@ -129,10 +129,10 @@ const loadDailyKData = async () => {
       // 准备图表数据
       const dates = kData.map(item => item.date)
       const ohlcData = kData.map(item => [
-        item.open,
-        item.low,
-        item.high,
-        item.close
+        item.open,    // 开盘价
+        item.close,   // 收盘价
+        item.low,     // 最低价
+        item.high     // 最高价
       ])
       const volumes = kData.map(item => item.volume)
       const ma5Data = kData.map(item => item.ma5)
