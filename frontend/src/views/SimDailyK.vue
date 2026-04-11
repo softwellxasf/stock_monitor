@@ -227,9 +227,9 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
   // 专业金融配色
   const colorUp = '#FF0000'      // 红色（涨）
   const colorDown = '#00CC00'    // 绿色（跌）
-  const colorMa5 = '#ffd700'     // 金黄色
-  const colorMa10 = '#00ced1'    // 青色
-  const colorMa20 = '#ff69b4'    // 粉色
+  const colorMa5 = '#FFFFFF'     // 金黄色
+  const colorMa10 = '#FFD700'    // 青色
+  const colorMa20 = '#00FFFF'    // 粉色
   
   const option = {
     backgroundColor: '#ffffff',
@@ -434,9 +434,11 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
         data: indicators.ma5Data,
         smooth: true,
         lineStyle: {
-          width: 1,
+          width: 1.5,  // 加粗
           color: colorMa5,
-          type: 'solid'
+          type: 'solid',
+          shadowColor: 'rgba(0,0,0,0.3)',  // 阴影
+          shadowBlur: 2
         },
         symbol: 'none',
         zlevel: 2
@@ -447,9 +449,11 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
         data: indicators.ma10Data,
         smooth: true,
         lineStyle: {
-          width: 1,
+          width: 1.5,  // 加粗
           color: colorMa10,
-          type: 'solid'
+          type: 'solid',
+          shadowColor: 'rgba(0,0,0,0.3)',
+          shadowBlur: 2
         },
         symbol: 'none',
         zlevel: 2
@@ -460,9 +464,11 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
         data: indicators.ma20Data,
         smooth: true,
         lineStyle: {
-          width: 1,
+          width: 1.5,  // 加粗
           color: colorMa20,
-          type: 'solid'
+          type: 'solid',
+          shadowColor: 'rgba(0,0,0,0.3)',
+          shadowBlur: 2
         },
         symbol: 'none',
         zlevel: 2
