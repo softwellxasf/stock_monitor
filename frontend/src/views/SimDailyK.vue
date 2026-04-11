@@ -65,7 +65,7 @@ let kChartInstance = null
 const defaultDateRange = computed(() => {
   const end = new Date()
   const start = new Date()
-  start.setDate(start.getDate() - 60)
+  start.setDate(start.getDate() - 30)  // 默认最近 30 天
   return [start.toISOString().split('T')[0], end.toISOString().split('T')[0]]
 })
 
