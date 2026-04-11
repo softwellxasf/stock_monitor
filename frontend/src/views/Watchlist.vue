@@ -73,6 +73,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { Search } from '@element-plus/icons-vue'
 import { watchlist } from '../api'
 import { ElMessage } from 'element-plus'
 
@@ -153,23 +154,41 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.watchlist { min-height: 100vh; background: #f5f7fa; }
-.el-header { 
-  background: #fff; 
-  border-bottom: 1px solid #e4e7ed; 
-  padding: 0 20px; 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center;
-  height: 60px;
+.watchlist {
+  padding: 10px;
 }
-.el-main { padding: 20px; }
-.search-card { padding: 10px; }
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
 .pagination-container {
   display: flex;
   justify-content: flex-end;
-  margin-top: 20px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #ebeef5;
 }
+
+.profit {
+  color: #f56c6c;
+  font-weight: bold;
+}
+
+.loss {
+  color: #67c23a;
+  font-weight: bold;
+}
+
 .discount-high { color: #f56c6c; font-weight: bold; }
 .discount-medium { color: #e6a23c; font-weight: bold; }
 .discount-low { color: #67c23a; }
