@@ -224,6 +224,17 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
     devicePixelRatio: window.devicePixelRatio || 1
   })
   
+  // 调试信息
+  console.log('=== K 线图配置 ===')
+  console.log('MA5 颜色:', colorMa5)
+  console.log('MA10 颜色:', colorMa10)
+  console.log('MA20 颜色:', colorMa20)
+  console.log('交易记录数量:', tradeRecords.value.length)
+  console.log('底仓买入标记:', buyMarks.length)
+  console.log('底仓卖出标记:', sellMarks.length)
+  console.log('做 T 买入标记:', tBuyMarks.length)
+  console.log('做 T 卖出标记:', tSellMarks.length)
+  
   // 专业金融配色
   const colorUp = '#FF0000'      // 红色（涨）
   const colorDown = '#00CC00'    // 绿色（跌）
