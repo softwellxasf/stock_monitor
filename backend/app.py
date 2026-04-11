@@ -1388,10 +1388,6 @@ def init_db():
             db.session.commit()
             print("✅ 默认管理员账户已创建：admin / admin123")
 
-if __name__ == '__main__':
-    init_db()
-    app.run(host='0.0.0.0', port=5000, debug=True)
-
 @app.route('/api/daily-k', methods=['GET'])
 @jwt_required()
 def get_daily_k():
@@ -1446,3 +1442,8 @@ def get_daily_k():
         'success': True,
         'data': k_data
     })
+
+if __name__ == '__main__':
+    init_db()
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
