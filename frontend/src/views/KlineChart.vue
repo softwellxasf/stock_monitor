@@ -219,8 +219,8 @@ const subChartContainer = ref(null)
 const defaultDateRange = computed(() => {
   const end = new Date()
   const start = new Date()
-  // 日 K 默认近 1 年，周 K/月 K 默认近 6 个月
-  const days = klineType.value === 'day' ? 365 : 180
+  // 日 K 默认近 1 年，周 K/月 K 默认近 3 年
+  const days = klineType.value === 'day' ? 365 : 1095
   start.setDate(start.getDate() - days)
   return [start.toISOString().split('T')[0], end.toISOString().split('T')[0]]
 })
