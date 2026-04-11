@@ -92,7 +92,18 @@
         <!-- 收益统计表格（选项卡） -->
         <el-tabs v-model="activeTab" class="mt-4" stretch>
           <el-tab-pane label="📅 日收益率" name="daily">
-            <div class="view-switcher">
+            <div class="tab-header">
+              <el-date-picker
+                v-model="dailyDateRange"
+                type="daterange"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                @change="loadDailyReturns"
+                value-format="YYYY-MM-DD"
+                size="small"
+              />
+              <div class="view-switcher">
               <el-button-group>
                 <el-button :type="dailyViewMode === 'chart' ? 'primary' : ''" @click="dailyViewMode = 'chart'">
                   <el-icon><TrendCharts /></el-icon> 折线图
@@ -132,7 +143,18 @@
           </el-tab-pane>
 
           <el-tab-pane label="📈 周收益率" name="weekly">
-            <div class="view-switcher">
+            <div class="tab-header">
+              <el-date-picker
+                v-model="weeklyDateRange"
+                type="daterange"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                @change="loadWeeklyReturns"
+                value-format="YYYY-MM-DD"
+                size="small"
+              />
+              <div class="view-switcher">
               <el-button-group>
                 <el-button :type="weeklyViewMode === 'chart' ? 'primary' : ''" @click="weeklyViewMode = 'chart'">
                   <el-icon><TrendCharts /></el-icon> 折线图
@@ -168,7 +190,18 @@
           </el-tab-pane>
 
           <el-tab-pane label="📉 月收益率" name="monthly">
-            <div class="view-switcher">
+            <div class="tab-header">
+              <el-date-picker
+                v-model="monthlyDateRange"
+                type="daterange"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                @change="loadMonthlyReturns"
+                value-format="YYYY-MM-DD"
+                size="small"
+              />
+              <div class="view-switcher">
               <el-button-group>
                 <el-button :type="monthlyViewMode === 'chart' ? 'primary' : ''" @click="monthlyViewMode = 'chart'">
                   <el-icon><TrendCharts /></el-icon> 折线图
@@ -314,6 +347,9 @@ const statsLoaded = ref(false)
 const analysisData = ref({})
 const analysisLoaded = ref(false)
 const activeTab = ref('daily')
+const dailyDateRange = ref([])
+const weeklyDateRange = ref([])
+const monthlyDateRange = ref([])
 const dailyViewMode = ref('chart')
 const weeklyViewMode = ref('chart')
 const monthlyViewMode = ref('chart')
@@ -759,6 +795,14 @@ onMounted(async () => {
   await Promise.all([loadStats(), loadPositions(), loadTrades(), loadAnalysis()])
   statsLoaded.value = true
 
+  // 设置默认日期范围（最近 60 天）
+  const today = new Date()
+  const sixtyDaysAgo = new Date(today.getTime() - 60 * 24 * 60 * 60 * 1000)
+  const defaultRange = [sixtyDaysAgo.toISOString().split('T')[0], today.toISOString().split('T')[0]]
+  dailyDateRange.value = defaultRange
+  weeklyDateRange.value = defaultRange
+  monthlyDateRange.value = defaultRange
+
   // 监听窗口大小变化
   window.addEventListener('resize', () => {
     if (dailyChartInstance) dailyChartInstance.resize()
@@ -766,6 +810,57 @@ onMounted(async () => {
     if (monthlyChartInstance) monthlyChartInstance.resize()
   })
 })
+
+// 加载日收益率数据
+const loadDailyReturns = async () => {
+  try {
+    const [start, end] = dailyDateRange.value || []
+    if (!start || !end) return
+    const analysisRes = await actual.getAnalysis(start, end)
+    if (analysisRes.data.success) {
+      const analysisData = analysisRes.data.data || {}
+      dailyReturns.value = analysisData.daily_returns || []
+      setTimeout(() => { initDailyChart() }, 100)
+    }
+  } catch (error) {
+    console.error('加载日收益率数据失败:', error)
+    ElMessage.error('加载日收益率数据失败')
+  }
+}
+
+// 加载周收益率数据
+const loadWeeklyReturns = async () => {
+  try {
+    const [start, end] = weeklyDateRange.value || []
+    if (!start || !end) return
+    const analysisRes = await actual.getAnalysis(start, end)
+    if (analysisRes.data.success) {
+      const analysisData = analysisRes.data.data || {}
+      weeklyReturns.value = analysisData.weekly_returns || []
+      setTimeout(() => { initWeeklyChart() }, 100)
+    }
+  } catch (error) {
+    console.error('加载周收益率数据失败:', error)
+    ElMessage.error('加载周收益率数据失败')
+  }
+}
+
+// 加载月收益率数据
+const loadMonthlyReturns = async () => {
+  try {
+    const [start, end] = monthlyDateRange.value || []
+    if (!start || !end) return
+    const analysisRes = await actual.getAnalysis(start, end)
+    if (analysisRes.data.success) {
+      const analysisData = analysisRes.data.data || {}
+      monthlyReturns.value = analysisData.monthly_returns || []
+      setTimeout(() => { initMonthlyChart() }, 100)
+    }
+  } catch (error) {
+    console.error('加载月收益率数据失败:', error)
+    ElMessage.error('加载月收益率数据失败')
+  }
+}
 </script>
 
 <style scoped>
@@ -1094,5 +1189,15 @@ onMounted(async () => {
 
 .calendar-day:not(.gain-5):not(.gain-3):not(.loss-3):not(.loss-5):hover {
   border-color: #409EFF;
+}
+</style>
+
+<style scoped>
+.tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 12px;
 }
 </style>
