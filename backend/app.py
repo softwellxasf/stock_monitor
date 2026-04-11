@@ -611,6 +611,7 @@ def get_actual_analysis():
     # 获取时间段参数
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
+    print(f"get_actual_analysis: start_date={start_date}, end_date={end_date}")
     
     # 获取所有快照数据
     query = DailySnapshot.query.order_by(DailySnapshot.snapshot_date.desc())
@@ -623,6 +624,7 @@ def get_actual_analysis():
         query = query.filter(DailySnapshot.snapshot_date >= start, DailySnapshot.snapshot_date <= end)
     
     snapshots = query.all()
+    print(f"查询返回 {len(snapshots)} 条快照数据")
 
     if not snapshots:
         return jsonify({
@@ -1013,6 +1015,7 @@ def get_sim_analysis():
         query = query.filter(SimDailySnapshot.snapshot_date >= start, SimDailySnapshot.snapshot_date <= end)
     
     snapshots = query.all()
+    print(f"查询返回 {len(snapshots)} 条快照数据")
 
     if not snapshots:
         return jsonify({
