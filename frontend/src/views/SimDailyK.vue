@@ -439,10 +439,10 @@ window.addEventListener('resize', () => {
 
 onMounted(() => {
   loadStockList()
-  // 设置默认日期范围（最近 30 天）
+  // 设置默认日期范围（最近 6 个月/180 天）
   const end = new Date()
   const start = new Date()
-  start.setDate(start.getDate() - 30)
+  start.setDate(start.getDate() - 180)
   searchForm.value.dateRange = [
     start.toISOString().split('T')[0],
     end.toISOString().split('T')[0]
