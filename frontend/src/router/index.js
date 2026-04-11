@@ -43,10 +43,10 @@ const routes = [
         meta: { requiresAuth: true, title: '模拟收益分析' }
       },
       {
-        path: 'sim/daily-k',
-        name: 'SimDailyK',
-        component: () => import('../views/SimDailyK.vue'),
-        meta: { requiresAuth: true, title: '日 K 记录' }
+        path: 'kline',
+        name: 'KlineChart',
+        component: () => import('../views/KlineChart.vue'),
+        meta: { requiresAuth: true, title: 'K 线图' }
       },
       {
         path: 'real/positions',
@@ -71,12 +71,6 @@ const routes = [
         name: 'Watchlist',
         component: () => import('../views/Watchlist.vue'),
         meta: { requiresAuth: true, title: '自选列表' }
-      },
-      {
-        path: 'stats',
-        name: 'Stats',
-        component: () => import('../views/Stats.vue'),
-        meta: { requiresAuth: true, title: '统计分析' }
       }
     ]
   }
