@@ -43,7 +43,14 @@ export const actual = {
   getPositions: (params) => api.get('/actual-positions', { params }),
   getTrades: (params) => api.get('/actual-trades', { params }),
   getStats: () => api.get('/actual-stats'),
-  getAnalysis: () => api.get('/actual-analysis'),
+  getAnalysis: (start, end) => {
+    const params = new URLSearchParams()
+    if (start && end) {
+      params.append('start_date', start)
+      params.append('end_date', end)
+    }
+    return api.get(`/actual-analysis?${params.toString()}`)
+  },
   getList: () => api.get('/watchlist')
 }
 
