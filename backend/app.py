@@ -119,16 +119,17 @@ class WatchlistHistory(db.Model):
     __tablename__ = 'watchlist_history'
     id = db.Column(db.Integer, primary_key=True)
     stock_code = db.Column(db.String(20), nullable=False)
-    stock_name = db.Column(db.String(100), nullable=False)
+    stock_name = db.Column(db.String(50))
+    quarter_start = db.Column(db.Date, nullable=False)
+    quarter_end = db.Column(db.Date, nullable=False)
     target_price = db.Column(db.Numeric(10,2))
-    target_type = db.Column(db.String(20))
-    current_price = db.Column(db.Numeric(10,2))
-    pe_ttm = db.Column(db.Numeric(10,2))
-    pb = db.Column(db.Numeric(10,2))
-    dividend_yield = db.Column(db.Numeric(5,4))
-    status = db.Column(db.String(20), default='active')
-    remark = db.Column(db.String(200))
+    target_type = db.Column(db.String(10))
+    current_price = db.Column(db.Numeric(10,4))
+    valuation_method = db.Column(db.String(100))
+    pe_ratio = db.Column(db.Numeric(10,2))
+    pb_ratio = db.Column(db.Numeric(10,2))
     created_at = db.Column(db.DateTime)
+    updated_at = db.Column(db.DateTime)
 
 # ============== 实盘数据模型 (复用 stockProject 数据库) ==============
 
@@ -434,12 +435,8 @@ def get_watchlist_history():
         WatchlistHistory.stock_name,
         WatchlistHistory.target_price,
         WatchlistHistory.target_type,
-        WatchlistHistory.current_price,
-        WatchlistHistory.pe_ttm,
-        WatchlistHistory.pb,
-        WatchlistHistory.dividend_yield,
-        WatchlistHistory.status,
-        WatchlistHistory.remark,
+        WatchlistHistory.pe_ratio,
+        WatchlistHistory.pb_ratio,
         WatchlistHistory.created_at
     )
 
@@ -472,12 +469,9 @@ def get_watchlist_history():
             'stock_name': r.stock_name,
             'target_price': float(r.target_price) if r.target_price else 0,
             'target_type': r.target_type or '',
-            'current_price': float(r.current_price) if r.current_price else 0,
-            'pe_ttm': float(r.pe_ttm) if r.pe_ttm else 0,
-            'pb': float(r.pb) if r.pb else 0,
-            'dividend_yield': float(r.dividend_yield) if r.dividend_yield else 0,
-            'status': r.status,
-            'remark': r.remark or '',
+            'pe_ttm': float(r.pe_ratio) if r.pe_ratio else 0,
+            'pb': float(r.pb_ratio) if r.pb_ratio else 0,
+            'dividend_yield': 0,
             'created_at': r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else None
         })
 
