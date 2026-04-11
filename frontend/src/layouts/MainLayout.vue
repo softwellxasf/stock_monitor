@@ -38,6 +38,10 @@
               <el-icon><DataAnalysis /></el-icon>
               <template #title>收益分析</template>
             </el-menu-item>
+            <el-menu-item index="/sim/daily-k">
+              <el-icon><TrendCharts /></el-icon>
+              <template #title>日 K 记录</template>
+            </el-menu-item>
           </el-sub-menu>
           
           <!-- 实盘分类 -->
@@ -137,6 +141,7 @@ const pageTitle = computed(() => {
     '/sim/positions': '模拟持仓',
     '/sim/trades': '模拟交易记录',
     '/sim/analysis': '模拟收益分析',
+    '/sim/daily-k': '日 K 记录',
     '/real': '实盘概览',
     '/real/positions': '实盘持仓',
     '/real/trades': '交易记录',

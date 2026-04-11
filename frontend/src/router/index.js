@@ -43,6 +43,12 @@ const routes = [
         meta: { requiresAuth: true, title: '模拟收益分析' }
       },
       {
+        path: 'sim/daily-k',
+        name: 'SimDailyK',
+        component: () => import('../views/SimDailyK.vue'),
+        meta: { requiresAuth: true, title: '日 K 记录' }
+      },
+      {
         path: 'real/positions',
         name: 'RealPositions',
         component: () => import('../views/RealPositions.vue'),
