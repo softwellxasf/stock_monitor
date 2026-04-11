@@ -163,8 +163,8 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
   })
   
   // 专业金融配色
-  const colorUp = '#ef232a'      // 红色（涨）
-  const colorDown = '#14b143'    // 绿色（跌）
+  const colorUp = '#FF0000'      // 红色（涨）
+  const colorDown = '#00CC00'    // 绿色（跌）
   const colorMa5 = '#ffd700'     // 金黄色
   const colorMa10 = '#00ced1'    // 青色
   const colorMa20 = '#ff69b4'    // 粉色
@@ -185,7 +185,7 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
       axisPointer: {
         type: 'cross'
       },
-      borderWidth: 1,
+      borderWidth: 3,
       borderColor: '#ccc',
       padding: 10,
       textStyle: {
@@ -421,7 +421,7 @@ const renderKChart = (dates, ohlcData, volumes, indicators) => {
             }
           }
         }),
-        barMaxWidth: 15,
+        barMaxWidth: 25,
         zlevel: 1
       }
     ]
