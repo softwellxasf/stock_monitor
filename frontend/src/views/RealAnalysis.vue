@@ -104,14 +104,15 @@
                 size="small"
               />
               <div class="view-switcher">
-              <el-button-group>
-                <el-button :type="dailyViewMode === 'chart' ? 'primary' : ''" @click="dailyViewMode = 'chart'">
-                  <el-icon><TrendCharts /></el-icon> 折线图
-                </el-button>
-                <el-button :type="dailyViewMode === 'table' ? 'primary' : ''" @click="dailyViewMode = 'table'">
-                  <el-icon><List /></el-icon> 表格
-                </el-button>
-              </el-button-group>
+                <el-button-group>
+                  <el-button :type="dailyViewMode === 'chart' ? 'primary' : ''" @click="dailyViewMode = 'chart'">
+                    <el-icon><TrendCharts /></el-icon> 折线图
+                  </el-button>
+                  <el-button :type="dailyViewMode === 'table' ? 'primary' : ''" @click="dailyViewMode = 'table'">
+                    <el-icon><List /></el-icon> 表格
+                  </el-button>
+                </el-button-group>
+              </div>
             </div>
 
             <!-- 表格视图 -->
@@ -155,14 +156,15 @@
                 size="small"
               />
               <div class="view-switcher">
-              <el-button-group>
-                <el-button :type="weeklyViewMode === 'chart' ? 'primary' : ''" @click="weeklyViewMode = 'chart'">
-                  <el-icon><TrendCharts /></el-icon> 折线图
-                </el-button>
-                <el-button :type="weeklyViewMode === 'table' ? 'primary' : ''" @click="weeklyViewMode = 'table'">
-                  <el-icon><List /></el-icon> 表格
-                </el-button>
-              </el-button-group>
+                <el-button-group>
+                  <el-button :type="weeklyViewMode === 'chart' ? 'primary' : ''" @click="weeklyViewMode = 'chart'">
+                    <el-icon><TrendCharts /></el-icon> 折线图
+                  </el-button>
+                  <el-button :type="weeklyViewMode === 'table' ? 'primary' : ''" @click="weeklyViewMode = 'table'">
+                    <el-icon><List /></el-icon> 表格
+                  </el-button>
+                </el-button-group>
+              </div>
             </div>
 
             <!-- 表格视图 -->
@@ -202,14 +204,15 @@
                 size="small"
               />
               <div class="view-switcher">
-              <el-button-group>
-                <el-button :type="monthlyViewMode === 'chart' ? 'primary' : ''" @click="monthlyViewMode = 'chart'">
-                  <el-icon><TrendCharts /></el-icon> 折线图
-                </el-button>
-                <el-button :type="monthlyViewMode === 'table' ? 'primary' : ''" @click="monthlyViewMode = 'table'">
-                  <el-icon><List /></el-icon> 表格
-                </el-button>
-              </el-button-group>
+                <el-button-group>
+                  <el-button :type="monthlyViewMode === 'chart' ? 'primary' : ''" @click="monthlyViewMode = 'chart'">
+                    <el-icon><TrendCharts /></el-icon> 折线图
+                  </el-button>
+                  <el-button :type="monthlyViewMode === 'table' ? 'primary' : ''" @click="monthlyViewMode = 'table'">
+                    <el-icon><List /></el-icon> 表格
+                  </el-button>
+                </el-button-group>
+              </div>
             </div>
 
             <!-- 表格视图 -->
@@ -815,11 +818,12 @@ onMounted(async () => {
 const loadDailyReturns = async () => {
   try {
     const [start, end] = dailyDateRange.value || []
+    console.log('loadDailyReturns:', start, end)
     if (!start || !end) return
     const analysisRes = await actual.getAnalysis(start, end)
+    console.log('analysisRes:', analysisRes.data)
     if (analysisRes.data.success) {
-      const analysisData = analysisRes.data.data || {}
-      dailyReturns.value = analysisData.daily_returns || []
+      analysisData.value = analysisRes.data.data || {}
       setTimeout(() => { initDailyChart() }, 100)
     }
   } catch (error) {
@@ -835,8 +839,7 @@ const loadWeeklyReturns = async () => {
     if (!start || !end) return
     const analysisRes = await actual.getAnalysis(start, end)
     if (analysisRes.data.success) {
-      const analysisData = analysisRes.data.data || {}
-      weeklyReturns.value = analysisData.weekly_returns || []
+      analysisData.value = analysisRes.data.data || {}
       setTimeout(() => { initWeeklyChart() }, 100)
     }
   } catch (error) {
@@ -852,8 +855,7 @@ const loadMonthlyReturns = async () => {
     if (!start || !end) return
     const analysisRes = await actual.getAnalysis(start, end)
     if (analysisRes.data.success) {
-      const analysisData = analysisRes.data.data || {}
-      monthlyReturns.value = analysisData.monthly_returns || []
+      analysisData.value = analysisRes.data.data || {}
       setTimeout(() => { initMonthlyChart() }, 100)
     }
   } catch (error) {
