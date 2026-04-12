@@ -65,7 +65,7 @@
         </el-table-column>
         <el-table-column prop="dividend_yield" label="股息率" width="90">
           <template #default="{ row }">
-            <span>{{ (row.dividend_yield * 100)?.toFixed(2) || '-' }}%</span>
+            <span>{{ row.dividend_yield?.toFixed(2) || '-' }}%</span>
           </template>
         </el-table-column>
         <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />

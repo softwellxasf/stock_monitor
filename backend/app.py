@@ -128,6 +128,7 @@ class WatchlistHistory(db.Model):
     valuation_method = db.Column(db.String(100))
     pe_ratio = db.Column(db.Numeric(10,2))
     pb_ratio = db.Column(db.Numeric(10,2))
+    dividend_yield = db.Column(db.Numeric(10,4))  # 股息率（小数形式，如 0.03 表示 3%）
     created_at = db.Column(db.DateTime)
     updated_at = db.Column(db.DateTime)
 
@@ -437,6 +438,7 @@ def get_watchlist_history():
         WatchlistHistory.target_type,
         WatchlistHistory.pe_ratio,
         WatchlistHistory.pb_ratio,
+        WatchlistHistory.dividend_yield,
         WatchlistHistory.quarter_start,
         WatchlistHistory.quarter_end
     )
@@ -472,7 +474,7 @@ def get_watchlist_history():
             'target_type': r.target_type or '',
             'pe_ttm': float(r.pe_ratio) if r.pe_ratio else 0,
             'pb': float(r.pb_ratio) if r.pb_ratio else 0,
-            'dividend_yield': 0,
+            'dividend_yield': float(r.dividend_yield) * 100 if r.dividend_yield else 0,
             'quarter_start': r.quarter_start.strftime('%Y-%m-%d') if r.quarter_start else None,
             'quarter_end': r.quarter_end.strftime('%Y-%m-%d') if r.quarter_end else None
         })
