@@ -75,6 +75,11 @@
         </el-table-column>
         <el-table-column prop="created_at" label="建仓时间" width="160" />
         <el-table-column prop="updated_at" label="更新时间" width="160" />
+        <el-table-column label="操作" width="120" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" size="small" @click="handleEdit(row)">修改</el-button>
+          </template>
+        </el-table-column>
       </el-table>
 
       <!-- 分页 -->
@@ -90,12 +95,32 @@
         />
       </div>
     </el-card>
+
+    <!-- 编辑对话框 -->
+    <el-dialog v-model="editDialogVisible" title="修改最高价" width="400px">
+      <el-form :model="editForm" label-width="80px">
+        <el-form-item label="股票代码">
+          <span>{{ editForm.stock_code }} - {{ editForm.stock_name }}</span>
+        </el-form-item>
+        <el-form-item label="现价">
+          <span>¥{{ editForm.current_price?.toFixed(4) }}</span>
+        </el-form-item>
+        <el-form-item label="最高价">
+          <el-input-number v-model="editForm.highest_price" :precision="4" :step="0.01" :min="0" style="width: 100%" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmEdit">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { actual } from '../api'
+import { ElMessage } from 'element-plus'
 
 const positions = ref([])
 const loading = ref(false)
@@ -111,6 +136,40 @@ const pagination = reactive({
   pageSize: 20,
   total: 0
 })
+
+// 编辑对话框
+const editDialogVisible = ref(false)
+const editForm = ref({
+  id: null,
+  stock_code: '',
+  stock_name: '',
+  current_price: 0,
+  highest_price: 0
+})
+
+// 编辑
+const handleEdit = (row) => {
+  editForm.value = {
+    id: row.id,
+    stock_code: row.stock_code,
+    stock_name: row.stock_name,
+    current_price: row.current_price,
+    highest_price: row.highest_price
+  }
+  editDialogVisible.value = true
+}
+
+// 确认编辑
+const confirmEdit = async () => {
+  try {
+    await actual.updatePosition(editForm.value.id, { highest_price: editForm.value.highest_price })
+    ElMessage.success('修改成功')
+    editDialogVisible.value = false
+    await loadPositions()
+  } catch (e) {
+    ElMessage.error('修改失败')
+  }
+}
 
 const loadPositions = async () => {
   loading.value = true

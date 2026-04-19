@@ -408,6 +408,7 @@ def get_watchlist():
     result = []
     for w in watchlist:
         result.append({
+            'id': w.id,
             'stock_code': w.stock_code,
             'stock_name': w.stock_name,
             'target_price': float(w.target_price) if w.target_price else 0,
@@ -417,6 +418,33 @@ def get_watchlist():
         })
 
     return jsonify({'success': True, 'data': result})
+
+@app.route('/api/watchlist/<int:id>', methods=['PUT'])
+@jwt_required()
+def update_watchlist(id):
+    """更新自选股目标价"""
+    data = request.get_json()
+    watchlist_item = Watchlist.query.get(id)
+    if not watchlist_item:
+        return jsonify({'success': False, 'message': '记录不存在'}), 404
+
+    if 'target_price' in data:
+        watchlist_item.target_price = float(data['target_price'])
+
+    db.session.commit()
+    return jsonify({'success': True, 'message': '更新成功'})
+
+@app.route('/api/watchlist/<int:id>', methods=['DELETE'])
+@jwt_required()
+def delete_watchlist(id):
+    """删除自选股记录"""
+    watchlist_item = Watchlist.query.get(id)
+    if not watchlist_item:
+        return jsonify({'success': False, 'message': '记录不存在'}), 404
+
+    db.session.delete(watchlist_item)
+    db.session.commit()
+    return jsonify({'success': True, 'message': '删除成功'})
 
 @app.route('/api/watchlist-history', methods=['GET'])
 @jwt_required()
@@ -561,6 +589,22 @@ def get_actual_positions():
         'industries': industry_list
     })
 
+@app.route('/api/actual-positions/<int:id>', methods=['PUT'])
+@jwt_required()
+def update_actual_position(id):
+    """更新实盘持仓最高价"""
+    data = request.get_json()
+    position = Position.query.get(id)
+    if not position:
+        return jsonify({'success': False, 'message': '持仓记录不存在'}), 404
+
+    if 'highest_price' in data:
+        position.highest_price = float(data['highest_price'])
+        position.updated_at = datetime.now()
+
+    db.session.commit()
+    return jsonify({'success': True, 'message': '更新成功'})
+
 @app.route('/api/actual-trades', methods=['GET'])
 @jwt_required()
 def get_actual_trades():
@@ -618,11 +662,18 @@ def get_actual_trades():
 
     result = []
     for t in trades:
+        # 将数据库中的中文方向转换为标准英文值
+        direction_value = t.direction
+        if t.direction == '买入':
+            direction_value = 'BUY'
+        elif t.direction == '卖出':
+            direction_value = 'SELL'
+
         result.append({
             'id': t.id,
             'stock_code': t.stock_code,
             'stock_name': t.stock_name or '',
-            'direction': t.direction,
+            'direction': direction_value,
             'price': float(t.price),
             'quantity': t.quantity,
             'amount': float(t.amount) if t.amount else 0,
@@ -647,6 +698,8 @@ def get_actual_trades():
 @jwt_required()
 def get_actual_stats():
     """获取实盘统计数据"""
+    from sqlalchemy import text
+
     # 持仓数量
     position_count = Position.query.filter(Position.quantity > 0).count()
 
@@ -664,23 +717,32 @@ def get_actual_stats():
         for p in positions
     )
 
-    # 计算总盈亏（从 trades 表累计卖出盈亏）
-    total_profit = db.session.query(db.func.sum(Trade.profit_loss)).filter(
+    # 未实现盈亏（持仓浮动盈亏）
+    unrealized_profit = total_market_value - total_cost
+
+    # 已实现盈亏（从 trades 表累计卖出盈亏）
+    realized_profit_raw = db.session.query(db.func.sum(Trade.profit_loss)).filter(
         Trade.direction == 'SELL',
         Trade.profit_loss != 0
     ).scalar() or 0
+    realized_profit = float(realized_profit_raw) if realized_profit_raw else 0
 
-    # 收益率
-    profit_pct = ((total_market_value - total_cost) / total_cost * 100) if total_cost > 0 else 0
+    # 累计收益 = 已实现盈亏 + 未实现盈亏
+    total_profit = realized_profit + unrealized_profit
 
-    # 计算当前仓位比例（从 actual_account 表）
-    from sqlalchemy import text
-    account = db.session.execute(text("SELECT total_value FROM actual_account WHERE id = 1")).fetchone()
-    if account and account[0] > 0:
-        position_ratio = (total_market_value / float(account[0]) * 100)
+    # 获取 actual_account 数据
+    account = db.session.execute(text("SELECT * FROM actual_account WHERE id = 1")).fetchone()
+
+    # 收益率 = 累计收益 / 初始资金
+    initial_capital = float(account.total_capital) if account and account.total_capital else 0
+    profit_pct = (total_profit / initial_capital * 100) if initial_capital > 0 else 0
+
+    # 计算当前仓位比例
+    if account and account.total_value > 0:
+        position_ratio = (total_market_value / float(account.total_value) * 100)
     else:
         position_ratio = 0
-    
+
     return jsonify({
         'success': True,
         'data': {
@@ -690,7 +752,9 @@ def get_actual_stats():
             'total_cost': round(total_cost, 2),
             'total_profit': round(float(total_profit), 2),
             'profit_pct': round(profit_pct, 2),
-            'position_ratio': round(position_ratio, 2)  # 新增：当前仓位比例
+            'position_ratio': round(position_ratio, 2),
+            'realized_profit': round(float(realized_profit), 2),  # 已实现盈亏
+            'unrealized_profit': round(float(unrealized_profit), 2)  # 未实现盈亏
         }
     })
 

@@ -36,7 +36,9 @@ export const sim = {
 
 export const watchlist = {
   getList: () => api.get('/watchlist'),
-  getHistory: (params) => api.get('/watchlist-history', { params })
+  getHistory: (params) => api.get('/watchlist-history', { params }),
+  update: (id, data) => api.put(`/watchlist/${id}`, data),
+  delete: (id) => api.delete(`/watchlist/${id}`)
 }
 
 export const actual = {
@@ -52,7 +54,8 @@ export const actual = {
     }
     return api.get(`/actual-analysis?${params.toString()}`)
   },
-  getList: () => api.get('/watchlist')
+  getList: () => api.get('/watchlist'),
+  updatePosition: (id, data) => api.put(`/actual-positions/${id}`, data)
 }
 
 export default api

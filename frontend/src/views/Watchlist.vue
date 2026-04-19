@@ -57,8 +57,14 @@
               </template>
             </el-table-column>
             <el-table-column prop="remark" label="备注" />
+            <el-table-column label="操作" width="180" fixed="right">
+              <template #default="{ row }">
+                <el-button type="primary" size="small" @click="handleEdit(row)">修改</el-button>
+                <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+              </template>
+            </el-table-column>
           </el-table>
-          
+
           <!-- 分页 -->
           <div class="pagination-container">
             <el-pagination
@@ -72,6 +78,22 @@
             />
           </div>
     </el-card>
+
+    <!-- 编辑对话框 -->
+    <el-dialog v-model="editDialogVisible" title="修改目标价" width="400px">
+      <el-form :model="editForm" label-width="80px">
+        <el-form-item label="股票代码">
+          <span>{{ editForm.stock_code }} - {{ editForm.stock_name }}</span>
+        </el-form-item>
+        <el-form-item label="目标价">
+          <el-input-number v-model="editForm.target_price" :precision="2" :step="0.1" :min="0" style="width: 100%" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmEdit">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -79,7 +101,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { watchlist } from '../api'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const loading = ref(false)
 const allList = ref([])
@@ -91,6 +113,60 @@ const searchForm = ref({
   keyword: '',
   status: ''
 })
+
+// 编辑对话框
+const editDialogVisible = ref(false)
+const editForm = ref({
+  id: null,
+  stock_code: '',
+  stock_name: '',
+  target_price: 0
+})
+
+// 编辑
+const handleEdit = (row) => {
+  editForm.value = {
+    id: row.id,
+    stock_code: row.stock_code,
+    stock_name: row.stock_name,
+    target_price: row.target_price
+  }
+  editDialogVisible.value = true
+}
+
+// 确认编辑
+const confirmEdit = async () => {
+  try {
+    await watchlist.update(editForm.value.id, { target_price: editForm.value.target_price })
+    ElMessage.success('修改成功')
+    editDialogVisible.value = false
+    // 重新加载数据
+    await loadWatchlist()
+  } catch (e) {
+    ElMessage.error('修改失败')
+  }
+}
+
+// 删除
+const handleDelete = (row) => {
+  ElMessageBox.confirm(
+    `确定要删除 "${row.stock_code} ${row.stock_name}" 吗？`,
+    '确认删除',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  ).then(async () => {
+    try {
+      await watchlist.delete(row.id)
+      ElMessage.success('删除成功')
+      await loadWatchlist()
+    } catch (e) {
+      ElMessage.error('删除失败')
+    }
+  }).catch(() => {})
+}
 
 // 过滤后的列表
 const paginatedList = computed(() => {
@@ -120,8 +196,8 @@ const getDiscountClass = (row) => {
 // 搜索
 const handleSearch = () => {
   filteredList.value = allList.value.filter(item => {
-    const matchKeyword = !searchForm.value.keyword || 
-      item.stock_code.includes(searchForm.value.keyword) || 
+    const matchKeyword = !searchForm.value.keyword ||
+      item.stock_code.includes(searchForm.value.keyword) ||
       item.stock_name.includes(searchForm.value.keyword)
     const matchStatus = !searchForm.value.status || item.status === searchForm.value.status
     return matchKeyword && matchStatus
@@ -141,7 +217,7 @@ const handleSizeChange = () => { currentPage.value = 1 }
 const handleCurrentChange = () => { window.scrollTo(0, 0) }
 
 // 加载数据
-onMounted(async () => {
+const loadWatchlist = async () => {
   loading.value = true
   try {
     const res = await watchlist.getList()
@@ -154,7 +230,9 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
+
+onMounted(loadWatchlist)
 </script>
 
 <style scoped>
