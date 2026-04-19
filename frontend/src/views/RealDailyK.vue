@@ -28,7 +28,7 @@
           />
         </el-select>
         <el-date-picker
-          v-model="searchForm.dateRange"
+          v-model="dateRange"
           type="daterange"
           range-separator="至"
           start-placeholder="开始日期"
@@ -79,6 +79,9 @@ const searchForm = ref({
   stockCode: '',
   dateRange: []
 })
+
+// 日期选择器绑定的值
+const dateRange = ref([])
 
 // 初始化图表
 const initChart = () => {
@@ -233,8 +236,8 @@ const loadDailyKData = async () => {
 
   loading.value = true
   try {
-    const dateRange = searchForm.value.dateRange || defaultDateRange.value
-    const [start, end] = dateRange
+    const range = dateRange.value || defaultDateRange.value
+    const [start, end] = range
 
     console.log('查询日期范围:', start, end)
     console.log('股票代码:', searchForm.value.stockCode)
@@ -369,6 +372,8 @@ onUnmounted(() => {
 })
 
 onMounted(() => {
+  // 初始化日期范围为默认值（近 180 天）
+  dateRange.value = defaultDateRange.value
   initChart()
   loadStockList()
 })
