@@ -12,6 +12,7 @@
           :default-active="activeMenu"
           :collapse="isCollapse"
           :collapse-transition="false"
+          :unique-opened="true"
           router
           class="sidebar-menu"
           background-color="transparent"
