@@ -65,7 +65,8 @@
         <el-col :span="6">
           <div class="overview-item">
             <div class="overview-label">当前仓位</div>
-            <div class="overview-value" v-if="stats.total_capital > 0 && stats.total_value > 0">{{ ((stats.total_value - stats.cash) / stats.total_capital * 100).toFixed(1) }}%</div>
+            <div class="overview-value" v-if="stats.position_ratio > 0">{{ stats.position_ratio.toFixed(1) }}%</div>
+            <div class="overview-value" v-else-if="stats.position_count > 0">0.0%</div>
             <div class="overview-value" v-else>-</div>
           </div>
         </el-col>
@@ -91,26 +92,22 @@
       <template #header>
         <div class="card-header-title">
           <span>📊 仓位分析</span>
-          <div class="date-range-picker">
-            <el-date-picker
-              v-model="positionDateRange"
-              type="daterange"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              :default-value="defaultDateRange"
-              @change="loadPositionData"
-              value-format="YYYY-MM-DD"
-              style="width: 240px"
-            />
-          </div>
         </div>
       </template>
 
       <el-tabs v-model="activePositionTab" class="position-tabs" stretch>
         <el-tab-pane label="📅 日仓位" name="daily">
-          <div v-if="dailyPositions.length === 0" class="empty-data">暂无数据</div>
-          <template v-else>
+          <div class="tab-header">
+            <el-date-picker
+              v-model="dailyDateRange"
+              type="daterange"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              @change="loadDailyPositionData"
+              value-format="YYYY-MM-DD"
+              size="small"
+            />
             <div class="view-switcher">
               <el-button-group>
                 <el-button :type="dailyViewMode === 'chart' ? 'primary' : ''" @click="dailyViewMode = 'chart'">
@@ -121,6 +118,9 @@
                 </el-button>
               </el-button-group>
             </div>
+          </div>
+          <div v-if="dailyPositions.length === 0" class="empty-data">暂无数据</div>
+          <template v-else>
 
             <!-- 表格视图 -->
             <el-table v-if="dailyViewMode === 'table'" :data="dailyPositions" stripe style="width: 100%" :max-height="350">
@@ -150,8 +150,17 @@
         </el-tab-pane>
 
         <el-tab-pane label="📈 周仓位" name="weekly">
-          <div v-if="weeklyPositions.length === 0" class="empty-data">暂无数据</div>
-          <template v-else>
+          <div class="tab-header">
+            <el-date-picker
+              v-model="weeklyDateRange"
+              type="daterange"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              @change="loadWeeklyPositionData"
+              value-format="YYYY-MM-DD"
+              size="small"
+            />
             <div class="view-switcher">
               <el-button-group>
                 <el-button :type="weeklyViewMode === 'chart' ? 'primary' : ''" @click="weeklyViewMode = 'chart'">
@@ -162,6 +171,9 @@
                 </el-button>
               </el-button-group>
             </div>
+          </div>
+          <div v-if="weeklyPositions.length === 0" class="empty-data">暂无数据</div>
+          <template v-else>
 
             <!-- 表格视图 -->
             <el-table v-if="weeklyViewMode === 'table'" :data="weeklyPositions" stripe style="width: 100%" :max-height="350">
@@ -186,8 +198,17 @@
         </el-tab-pane>
 
         <el-tab-pane label="📉 月仓位" name="monthly">
-          <div v-if="monthlyPositions.length === 0" class="empty-data">暂无数据</div>
-          <template v-else>
+          <div class="tab-header">
+            <el-date-picker
+              v-model="monthlyDateRange"
+              type="daterange"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              @change="loadMonthlyPositionData"
+              value-format="YYYY-MM-DD"
+              size="small"
+            />
             <div class="view-switcher">
               <el-button-group>
                 <el-button :type="monthlyViewMode === 'chart' ? 'primary' : ''" @click="monthlyViewMode = 'chart'">
@@ -198,6 +219,9 @@
                 </el-button>
               </el-button-group>
             </div>
+          </div>
+          <div v-if="monthlyPositions.length === 0" class="empty-data">暂无数据</div>
+          <template v-else>
 
             <!-- 表格视图 -->
             <el-table v-if="monthlyViewMode === 'table'" :data="monthlyPositions" stripe style="width: 100%" :max-height="350">
@@ -235,6 +259,7 @@ const stats = ref({
   total_value: 0,
   cash: 0,
   position_count: 0,
+  position_ratio: 0,
   watchlist_count: 0,
   total_capital: 0
 })
@@ -245,8 +270,10 @@ const activePositionTab = ref('daily')
 const dailyPositions = ref([])
 const weeklyPositions = ref([])
 const monthlyPositions = ref([])
-const positionDateRange = ref([])
-const defaultDateRange = ref([])
+const dailyDateRange = ref([])
+const weeklyDateRange = ref([])
+const monthlyDateRange = ref([])
+
 const dailyPositionChartRef = ref(null)
 const weeklyPositionChartRef = ref(null)
 const monthlyPositionChartRef = ref(null)
@@ -286,11 +313,15 @@ onMounted(async () => {
       analysisData = analysisRes.data.data || {}
     }
 
+    console.log('statsData:', statsData)
+    console.log('position_count:', statsData.position_count)
+    
     stats.value = {
       total_value: accountData.total_value || 0,
       cash: accountData.cash || 0,
       total_capital: accountData.total_capital || 0,
       position_count: statsData.position_count || 0,
+      position_ratio: statsData.position_ratio || 0,
       watchlist_count: watchlistData.length || 0
     }
 
@@ -304,13 +335,36 @@ onMounted(async () => {
       initDailyPositionChart()
     }, 100)
 
-    // 设置默认日期范围（最近 60 天）
-    const today = new Date()
-    const sixtyDaysAgo = new Date(today.getTime() - 60 * 24 * 60 * 60 * 1000)
-    positionDateRange.value = [sixtyDaysAgo.toISOString().split('T')[0], today.toISOString().split('T')[0]]
-    defaultDateRange.value = [sixtyDaysAgo, today]
     
-    // 窗口大小改变时重新渲染图表
+    // 从接口获取实际数据范围，设置默认日期
+    try {
+      const analysisRes = await sim.getAnalysis()
+      if (analysisRes.data.success) {
+        const analysisData = analysisRes.data.data || {}
+        dailyPositions.value = analysisData.daily_positions || []
+        weeklyPositions.value = analysisData.weekly_positions || []
+        monthlyPositions.value = analysisData.monthly_positions || []
+        
+        // 根据实际数据范围设置默认日期（不限制 60 天）
+        if (dailyPositions.value.length > 0) {
+          const dates = dailyPositions.value.map(p => p.date).filter(d => d)
+          if (dates.length > 0) {
+            const sortedDates = dates.sort()
+            const minDate = sortedDates[0]  // 最早日期
+            const maxDate = sortedDates[sortedDates.length - 1]  // 最晚日期
+            const actualRange = [minDate, maxDate]
+            dailyDateRange.value = actualRange
+            weeklyDateRange.value = actualRange
+            monthlyDateRange.value = actualRange
+          }
+        }
+        
+        setTimeout(() => { initDailyPositionChart() }, 100)
+      }
+    } catch (error) {
+      console.error('加载初始数据失败:', error)
+    }
+    
     window.addEventListener('resize', () => {
       if (dailyPositionChartInstance) dailyPositionChartInstance.resize()
       if (weeklyPositionChartInstance) weeklyPositionChartInstance.resize()
@@ -324,29 +378,58 @@ onMounted(async () => {
   }
 })
 
-// 加载仓位数据（支持时间段查询）
-const loadPositionData = async () => {
+// 加载日仓位数据
+const loadDailyPositionData = async () => {
   try {
-    const [start, end] = positionDateRange.value || []
+    const [start, end] = dailyDateRange.value || []
     if (!start || !end) return
-    
     const analysisRes = await sim.getAnalysis(start, end)
     if (analysisRes.data.success) {
       const analysisData = analysisRes.data.data || {}
       dailyPositions.value = analysisData.daily_positions || []
-      weeklyPositions.value = analysisData.weekly_positions || []
-      monthlyPositions.value = analysisData.monthly_positions || []
-      
-      // 重新初始化图表
-      setTimeout(() => {
-        initDailyPositionChart()
-      }, 100)
+      setTimeout(() => { initDailyPositionChart() }, 100)
     }
   } catch (error) {
-    console.error('加载仓位数据失败:', error)
-    ElMessage.error('加载仓位数据失败')
+    console.error('加载日仓位数据失败:', error)
+    ElMessage.error('加载日仓位数据失败')
   }
 }
+
+// 加载周仓位数据
+const loadWeeklyPositionData = async () => {
+  try {
+    const [start, end] = weeklyDateRange.value || []
+    if (!start || !end) return
+    const analysisRes = await sim.getAnalysis(start, end)
+    if (analysisRes.data.success) {
+      const analysisData = analysisRes.data.data || {}
+      weeklyPositions.value = analysisData.weekly_positions || []
+      setTimeout(() => { initWeeklyPositionChart() }, 100)
+    }
+  } catch (error) {
+    console.error('加载周仓位数据失败:', error)
+    ElMessage.error('加载周仓位数据失败')
+  }
+}
+
+// 加载月仓位数据
+const loadMonthlyPositionData = async () => {
+  try {
+    const [start, end] = monthlyDateRange.value || []
+    if (!start || !end) return
+    const analysisRes = await sim.getAnalysis(start, end)
+    if (analysisRes.data.success) {
+      const analysisData = analysisRes.data.data || {}
+      monthlyPositions.value = analysisData.monthly_positions || []
+      setTimeout(() => { initMonthlyPositionChart() }, 100)
+    }
+  } catch (error) {
+    console.error('加载月仓位数据失败:', error)
+    ElMessage.error('加载月仓位数据失败')
+  }
+}
+
+
 
 // 监听 tab 切换
 watch(activePositionTab, (newTab) => {
@@ -725,10 +808,17 @@ const initMonthlyPositionChart = () => {
   font-size: 14px;
 }
 
+.tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
 .view-switcher {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 12px;
+  margin-bottom: 0;
 }
 
 .currency {
@@ -737,7 +827,4 @@ const initMonthlyPositionChart = () => {
 </style>
 
 <style scoped>
-.date-range-picker {
-  margin-left: 20px;
-}
 </style>
