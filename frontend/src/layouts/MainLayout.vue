@@ -66,6 +66,10 @@
               <el-icon><DataAnalysis /></el-icon>
               <template #title>收益分析</template>
             </el-menu-item>
+            <el-menu-item index="/real/kline">
+              <el-icon><TrendCharts /></el-icon>
+              <template #title>日 K 记录</template>
+            </el-menu-item>
           </el-sub-menu>
           
           <!-- 公共功能 -->
@@ -146,6 +150,7 @@ const pageTitle = computed(() => {
     '/real/positions': '实盘持仓',
     '/real/trades': '交易记录',
     '/real/analysis': '收益分析',
+    '/real/kline': '日 K 记录',
     '/watchlist': '自选列表',
     '/watchlist-history': '历史估值'
   }

@@ -67,6 +67,12 @@ const routes = [
         meta: { requiresAuth: true, title: '收益分析' }
       },
       {
+        path: 'real/kline',
+        name: 'RealDailyK',
+        component: () => import('../views/RealDailyK.vue'),
+        meta: { requiresAuth: true, title: '日 K 记录' }
+      },
+      {
         path: 'watchlist',
         name: 'Watchlist',
         component: () => import('../views/Watchlist.vue'),
