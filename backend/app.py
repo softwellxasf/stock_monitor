@@ -727,15 +727,27 @@ def get_actual_stats():
     ).scalar() or 0
     realized_profit = float(realized_profit_raw) if realized_profit_raw else 0
 
-    # 累计收益 = 已实现盈亏 + 未实现盈亏
-    total_profit = realized_profit + unrealized_profit
-
     # 获取 actual_account 数据
     account = db.session.execute(text("SELECT * FROM actual_account WHERE id = 1")).fetchone()
 
-    # 收益率 = 累计收益 / 初始资金
-    initial_capital = float(account.total_capital) if account and account.total_capital else 0
-    profit_pct = (total_profit / initial_capital * 100) if initial_capital > 0 else 0
+    # 获取 latest snapshot 数据（参考 stockProject 的计算方式）
+    # total_return 是基于持仓成本的累计收益率
+    latest_snapshot = db.session.execute(text("""
+        SELECT total_asset, position_value, total_return FROM daily_snapshots
+        ORDER BY snapshot_date DESC LIMIT 1
+    """)).fetchone()
+
+    # 优先从 snapshot 获取累计收益（如果有 total_return 数据）
+    # 累计收益 = 持仓总成本 × total_return%
+    if latest_snapshot and latest_snapshot[2]:  # total_return 字段
+        total_return_pct = float(latest_snapshot[2])
+        total_profit = total_cost * (total_return_pct / 100)
+    else:
+        # fallback: 已实现盈亏 + 未实现盈亏
+        total_profit = realized_profit + unrealized_profit
+
+    # 收益率 = 累计收益 / 持仓成本
+    profit_pct = (total_profit / total_cost * 100) if total_cost > 0 else 0
 
     # 计算当前仓位比例
     if account and account.total_value > 0:

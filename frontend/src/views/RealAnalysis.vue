@@ -425,9 +425,10 @@ const loadStats = async () => {
     const res = await actual.getStats()
     if (res.data.success) {
       stats.value = res.data.data
-      stats.value.total_profit_pct = stats.value.total_cost > 0
-        ? ((stats.value.total_market_value - stats.value.total_cost) / stats.value.total_cost * 100)
-        : 0
+      // 使用后端返回的 profit_pct，不要自己重新计算
+      // 后端已经基于 daily_snapshots.total_return 计算了正确的收益率
+      // 模板中使用的是 total_profit_pct，所以设置一个别名
+      stats.value.total_profit_pct = res.data.data.profit_pct
     }
   } catch (error) {
     console.error('加载统计数据失败:', error)
